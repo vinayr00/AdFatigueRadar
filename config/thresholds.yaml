@@ -1,0 +1,136 @@
+# config/thresholds.yaml — thresholds_v4
+# Authority: Master Spec §16 (canonical) + §17 (safe bounds)
+# This file is the SINGLE SOURCE of all numeric thresholds.
+# Never hard-code these values in Python. check_config.py validates this file.
+# PUT /campaigns/{id}/thresholds does NOT rewrite this file — it applies a runtime override.
+
+config_version: thresholds_v4
+
+compute:
+  step_minutes: 5
+  guard_window_minutes: 60
+  ewma_alpha: 0.30
+
+audience_gates:
+  watch: 0.50
+  warning: 0.65
+  soft: 0.75
+  critical: 0.85
+  pause_audience: 0.85
+  warning_recovery: 0.45
+  soft_recovery: 0.60
+
+economic:
+  pause_gate: 0.70
+  min_conversions_in_window: 20
+  baseline_a_cpa_multiplier: 1.25
+
+persistence_hours:
+  warning: 0.5
+  soft: 1.0
+  pause: 0.5       # Path A persistence
+  emergency: 0.25  # Path B persistence
+  recovery: 1.0
+
+cooldown_minutes: 60
+
+evidence:
+  min_classified_comments: 30
+  min_distinct_authors: 10
+  min_classifier_confidence: 0.85
+  harmful_wilson_lb_min: 0.35
+  wilson_z: 1.96
+
+audience_weights:
+  harmful_negative_ratio: 0.30
+  sentiment_decay: 0.25
+  fatigue_mockery: 0.20
+  comment_acceleration: 0.10
+  ctr_frequency: 0.10
+  critical_complaint: 0.05
+
+economic_weights:
+  cpa_cpm: 0.55
+  roas_conversion: 0.45
+
+normalization:
+  harmful_negative_ratio: {low: 0.10, high: 0.45}
+  sentiment_decay:         {low: 0.02, high: 0.15}
+  fatigue_mockery:         {low: 0.05, high: 0.35}
+  comment_acceleration:    {low: 0.01, high: 0.10}
+  ctr_decay_pct:           {low: 5, high: 40}
+  frequency_increase_pct:  {low: 10, high: 80}
+  critical_complaint:      {low: 0.02, high: 0.20}
+  cpa_delta_pct:           {low: 5, high: 40}
+  cpm_delta_pct:           {low: 5, high: 35}
+  roas_drop_pct:           {low: 5, high: 35}
+  conv_rate_drop_pct:      {low: 5, high: 35}
+
+category_weights:
+  product_complaint: 1.00
+  service_complaint: 1.00
+  fatigue: 0.80
+  mockery: 0.75
+  spam: 0.60
+  banter_meme: 0.00
+  neutral: 0.00
+  positive: 0.00
+
+# comment_acceleration epsilon (P-06): prevents division-by-zero on zero prior rate
+# Set to 0.01 comments/min as a plausible floor for a zero-rate window.
+accel_eps: 0.01
+
+# Duplicate cluster minimum characters after normalization (P-07)
+# Comments shorter than this after strip/lower are excluded from cluster analysis.
+# Set to 3 chars — excludes emoji-only ("😂" → "") and ultra-short noise.
+dup_min_chars: 3
+
+# Readback retry cap (P-13)
+readback_max_retries: 3
+
+# Baseline warm-up (P-05)
+# method: ewma — use EWMA of the first window as the baseline
+# window_minutes: same as guard_window_minutes (60 min = 12 steps)
+# warmup_steps: 12 steps (one full guard window) before baseline-dependent signals activate
+baseline:
+  method: ewma
+  window_minutes: 60
+  warmup_steps: 12
+
+critical_complaint:
+  categories: [product_complaint, service_complaint]
+  min_confidence: 0.85
+  rate_min: 0.20
+
+anomaly:
+  top_author_share_max: 0.30
+  duplicate_cluster_share_max: 0.40
+  per_author_max_comments_per_window: 3
+
+actions:
+  soft_budget_multiplier: 0.80
+
+staleness:
+  stale_after_steps: 2
+  check_states: [ACTIVE, SOFT_REDUCED]
+  paused_heartbeat: true
+
+# Server-side safe bounds (§17) — used by API threshold override validation
+# Only keys in threshold_mutable_keys may be changed via PUT /thresholds
+safe_bounds:
+  audience_gates.warning:              {min: 0.40, max: 0.90}
+  audience_gates.soft:                 {min: 0.50, max: 0.95}
+  audience_gates.pause_audience:       {min: 0.75, max: 0.99}
+  economic.pause_gate:                 {min: 0.50, max: 0.95}
+  cooldown_minutes:                    {min: 15, max: 1440}
+  actions.soft_budget_multiplier:      {min: 0.30, max: 0.95}
+
+# Mutable key allowlist for PUT /thresholds (P-17)
+# Only these keys may be overridden at runtime. All others → 422.
+threshold_mutable_keys:
+  - audience_gates.warning
+  - audience_gates.soft
+  - audience_gates.pause_audience
+  - economic.pause_gate
+  - cooldown_minutes
+  - actions.soft_budget_multiplier

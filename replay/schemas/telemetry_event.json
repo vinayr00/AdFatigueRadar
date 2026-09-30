@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TelemetryEvent",
+  "description": "Frozen contract §5.2. Ratio fields nullable — heartbeat may carry null cpm/cpc/cpa/roas.",
+  "type": "object",
+  "required": ["event_id", "timestamp", "campaign_id", "ad_id", "spend", "impressions", "reach", "clicks", "conversions"],
+  "properties": {
+    "event_id":    {"type": "string"},
+    "timestamp":   {"type": "string", "format": "date-time"},
+    "campaign_id": {"type": "string"},
+    "ad_id":       {"type": "string"},
+    "spend":       {"type": "number"},
+    "impressions": {"type": "number"},
+    "reach":       {"type": "number"},
+    "clicks":      {"type": "number"},
+    "conversions": {"type": "number"},
+    "cpm":         {"type": ["number", "null"]},
+    "cpc":         {"type": ["number", "null"]},
+    "cpa":         {"type": ["number", "null"], "description": "null when conversions=0; never infinity"},
+    "roas":        {"type": ["number", "null"]}
+  }
+}

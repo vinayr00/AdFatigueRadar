@@ -1,11 +1,92 @@
+# ==========================================
+# AdFatigueRadar — Git Ignore Configuration
+# ==========================================
+
+# Environment & Secrets (NEVER COMMIT)
+.env
+.env.*
+*.env
+!.env.example
+secrets.yaml
+secrets.json
+*.pem
+*.key
+*.cert
+*.crt
+*.p12
+*.pfx
+
+# Python Bytecode & Optimization
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.pyd
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+*.virtualenv/
+
+# Distribution / Packaging / Builds
+dist/
+build/
+*.egg-info/
+.eggs/
+eggs/
+*.egg
+MANIFEST
+
+# Testing, Coverage & Linters
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+.mypy_cache/
+.ruff_cache/
+.dmypy.json
+dmypy.json
+
+# IDE & Editor Configurations
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# Logs & Temporary Runtime Files
+*.log
+logs/
+tmp/
+temp/
+*.pid
+
+# OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Database, Model Cache & Large Artifacts
+*.sqlite
+*.sqlite3
+*.db
+*.joblib
 data/models/
 data/banking77/
 data/tweeteval/
-__pycache__/
-*.pyc
-.pytest_cache/
-*.db
-*.sqlite
-*.joblib
 .ipynb_checkpoints/
 worktodo/
