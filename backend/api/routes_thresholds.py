@@ -29,6 +29,24 @@ from backend.risk.config_loader import get_config
 router = APIRouter(prefix="/campaigns", tags=["thresholds"])
 
 
+@router.get("/{campaign_id}/thresholds")
+async def get_thresholds(campaign_id: str) -> JSONResponse:
+    """Read the campaign's effective threshold configuration and override bounds."""
+    reg = get_registry()
+    ctx = reg.get(campaign_id)
+    if ctx is None:
+        raise HTTPException(status_code=404, detail="Unknown campaign")
+    with ctx.lock:
+        cfg = ctx.machine._cfg
+        return JSONResponse(content={
+            "campaign_id": campaign_id,
+            "config_version": ctx.machine.config_version,
+            "effective_config": cfg,
+            "threshold_mutable_keys": cfg["threshold_mutable_keys"],
+            "safe_bounds": cfg["safe_bounds"],
+        })
+
+
 @router.put("/{campaign_id}/thresholds")
 async def update_thresholds(
     campaign_id: str,

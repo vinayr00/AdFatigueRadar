@@ -249,6 +249,23 @@ class TimelinePoint(BaseModel):
     stale: bool
     anomaly: bool
     action_events: list[str] = Field(default_factory=list)   # audit_ids of actions at this tick
+    reason_codes: list[ReasonCode] = Field(default_factory=list)
+    cooldown_remaining_minutes: Optional[float] = None
+    config_version: str
+
+
+class CommentSummary(BaseModel):
+    """Safe read-only comment/NLP view; author identifiers are intentionally absent."""
+    event_id: str
+    timestamp: datetime
+    campaign_id: str
+    ad_id: str
+    text: str
+    sentiment: Optional[str] = None
+    sentiment_score: Optional[float] = None
+    category: Optional[str] = None
+    confidence: Optional[float] = None
+    critical_complaint: bool = False
 
 
 # ---------------------------------------------------------------------------
