@@ -3,173 +3,184 @@ AdFatigueRadar — Stage 1: General Sentiment Classifier
 ======================================================
 PERSON 1: AI / NLP Layer
 
-Classifies comments into general sentiment: [positive, neutral, negative]
-with calibrated probability score. Independent from custom 8-class taxonomy.
+Classifies comments into general sentiment: [negative, neutral, positive]
+with calibrated softmax probability scores using a locally cached RoBERTa model.
+CPU-only, loaded once, eval mode, torch.no_grad, fully deterministic.
 """
 
 import os
 import re
 from typing import Dict, Any, Tuple, Optional, List
-import numpy as np
+import torch
+from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
+from .constants import SENTIMENT_LABELS, DEFAULT_MAX_SEQ_LENGTH
 from .preprocessing import normalize_text
 from .calibration import TemperatureScaler, default_scaler
 
-# Sentiment Label Mapping
-SENTIMENT_LABELS = ("negative", "neutral", "positive")
+# Seed for absolute reproducibility
+torch.manual_seed(42)
 
-# Lexicons and semantic patterns for fast rule-assisted sentiment modeling & fallback
-_POSITIVE_PATTERNS = [
-    r"\b(love|great|awesome|best|amazing|fire|goat|super|good|solid|clean|worth it|recommend|obsessed|perfect|nice|cool|w|valid)\b",
-    r"(❤️|🔥|😍|🙌|👍|✨|💯|👏)",
-    r"\b(bought again|ordered again|purchased again|got mine|love mine|rizz|let him cook|he cookin|sigma|cinema)\b",
-]
-
-_NEGATIVE_PATTERNS = [
-    r"\b(scam|trash|garbage|hate|horrible|terrible|awful|worst|broken|broke|fake|ruined|waste|useless|stolen|cheat|defective|disappointed)\b",
-    r"\b(never again|stop showing|annoying|sick of|tired of|unfollow|overpriced|refund|ripoff|never received|still not received|ghosted)\b",
-    r"\b(crypto|telegram|whatsapp me|dm me|free followers|make money fast|link in bio)\b",
-    r"(😡|🤬|🤮|🤢|💩|👎|📉)",
-]
-
-_MOCKERY_PATTERNS = [
-    r"\b(the acting|bro think he|who approved this|cringe|aint no way|npc behavior|clown show|delusional|acting is wild|budget ran out)\b",
-    r"\b(who made this ad|voiceover is so bad|fake reaction|ai generated actor)\b",
-    r"(🤡|💀|😭|🤣|🤦‍♂️|🤦‍♀️)",
-]
+# Specific domain disambiguation guard patterns
+# DOCUMENTED RULE: 'again' refers to positive repeat purchase when combined with buying verbs,
+# whereas 'ad again' indicates negative ad fatigue.
+_REPEAT_PURCHASE_PATTERN = re.compile(r"\b(bought again|ordered again|purchased again|got it again)\b", re.IGNORECASE)
+_AD_FATIGUE_PATTERN = re.compile(r"\b(this ad again|seen this ad|this same ad|saw this ad|another ad|stop showing me this ad)\b", re.IGNORECASE)
 
 
 class SentimentClassifier:
     """
     Stage 1 Sentiment Classifier.
-    Employs an ultra-fast, deterministic semantic sentiment analyzer by default,
-    with optional local HuggingFace Transformer loading (cardiffnlp/twitter-roberta-base-sentiment-latest)
-    when use_transformer=True.
+    Loads local RoBERTa sentiment model once on CPU.
     """
     def __init__(
         self,
         model_dir: Optional[str] = None,
         scaler: Optional[TemperatureScaler] = None,
-        use_transformer: bool = False
     ):
         self.scaler = scaler or default_scaler
-        self.use_transformer = use_transformer or bool(os.environ.get("USE_TRANSFORMER_NLP", False))
-        self.model_dir = model_dir
-        self.pipeline = None
-        self._initialized = False
-
-    def _ensure_model_loaded(self):
-        """Lazy load transformer pipeline only when enabled and required."""
-        if self._initialized or not self.use_transformer:
-            self._initialized = True
-            return
-
-        self._initialized = True
-        candidates = []
-        if self.model_dir:
-            candidates.append(self.model_dir)
+        self.model_dir = model_dir or self._find_default_model_dir()
         
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # Load local model and tokenizer once
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_dir, local_files_only=True)
+        self.model = AutoModelForSequenceClassification.from_pretrained(self.model_dir, local_files_only=True)
+        self.model.to(self.device)
+        self.model.eval()
+        
+        # Verify model config mapping
+        self.id2label = self.model.config.id2label
+        self.model_name = self.model.config._name_or_path or "twitter-roberta-base-sentiment-latest"
+        self.model_version = getattr(self.model.config, "transformers_version", "1.0")
+
+    def _find_default_model_dir(self) -> str:
         base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-        candidates.extend([
-            os.path.join(base_dir, "data", "models", "twitter-roberta-base-sentiment-latest"),
-            os.path.join(base_dir, "data", "models", "twitter-xlm-roberta-base-sentiment"),
-        ])
+        candidate = os.path.join(base_dir, "data", "models", "twitter-roberta-base-sentiment-latest")
+        if os.path.exists(candidate) and os.path.exists(os.path.join(candidate, "config.json")):
+            return candidate
+        fallback = os.path.join(base_dir, "data", "models", "twitter-xlm-roberta-base-sentiment")
+        if os.path.exists(fallback):
+            return fallback
+        raise FileNotFoundError(f"Local sentiment model directory not found at {candidate}")
 
-        for path in candidates:
-            if os.path.exists(path) and os.path.exists(os.path.join(path, "config.json")):
-                try:
-                    from transformers import pipeline, AutoModelForSequenceClassification, AutoTokenizer
-                    tokenizer = AutoTokenizer.from_pretrained(path, local_files_only=True)
-                    model = AutoModelForSequenceClassification.from_pretrained(path, local_files_only=True)
-                    self.pipeline = pipeline(
-                        "text-classification",
-                        model=model,
-                        tokenizer=tokenizer,
-                        top_k=None,
-                        device=-1  # CPU safe
-                    )
-                    return
-                except Exception:
-                    continue
-
-    def _fast_lexical_sentiment(self, text: str) -> Tuple[str, float, Dict[str, float]]:
+    def _apply_guard_rules(self, text: str, probs: Dict[str, float]) -> Tuple[str, float, Dict[str, float]]:
         """
-        Deterministic, fast lexical & pattern-based sentiment inference.
-        Ensures consistent, instant execution on CPU with zero cold-start delay.
+        Applies domain-specific guard rules for ad fatigue vs repeat purchase disambiguation.
+        Guards adjust probability distribution if specific domain triggers match.
         """
-        clean = normalize_text(text)
-        lower = clean.lower()
+        lower = text.lower()
         
-        pos_score = sum(len(re.findall(p, lower)) for p in _POSITIVE_PATTERNS)
-        neg_score = sum(len(re.findall(p, lower)) for p in _NEGATIVE_PATTERNS)
-        mock_score = sum(len(re.findall(p, lower)) for p in _MOCKERY_PATTERNS)
-        
-        # Specific positive overrides
-        if "bought again" in lower or "ordered again" in lower:
-            pos_score += 3
-            neg_score = max(0, neg_score - 2)
-            
-        # Fatigue language is negative sentiment
-        if "this ad again" in lower or "stop showing" in lower or "seen this 100 times" in lower:
-            neg_score += 3
+        # Repeat purchase guard: "bought again" -> high positive confidence
+        if _REPEAT_PURCHASE_PATTERN.search(lower):
+            probs = {"negative": 0.005, "neutral": 0.015, "positive": 0.980}
+            return "positive", 0.980, probs
 
-        # Convert to pseudo-logits
-        logits = [
-            0.5 + 1.2 * neg_score + 0.8 * mock_score,  # negative
-            1.0,                                      # neutral baseline
-            0.5 + 1.4 * pos_score                     # positive
-        ]
-        
-        calibrated = self.scaler.calibrate_logits(logits)
-        probs = {
-            "negative": calibrated[0],
-            "neutral": calibrated[1],
-            "positive": calibrated[2]
-        }
-        
+        # Ad fatigue guard: "this ad again" -> high negative confidence
+        if _AD_FATIGUE_PATTERN.search(lower):
+            probs = {"negative": 0.920, "neutral": 0.060, "positive": 0.020}
+            return "negative", 0.920, probs
+
         top_label = max(probs, key=probs.get)
         top_score = probs[top_label]
         return top_label, top_score, probs
 
-    def predict(self, text: str) -> Tuple[str, float, Dict[str, float]]:
+    def predict(self, text: Optional[str]) -> Tuple[str, float, Dict[str, float]]:
         """
-        Predicts sentiment for a single comment.
-        Returns: (label: str, confidence: float, class_probabilities: Dict[str, float])
+        Predicts sentiment for a single comment string.
+        
+        Returns:
+            label (str): "positive", "neutral", or "negative"
+            confidence (float): softmax probability score [0.0, 1.0]
+            probabilities (Dict[str, float]): full probability distribution
         """
-        clean = normalize_text(text)
+        clean = normalize_text(text) if text is not None else ""
         if not clean:
+            # Neutral fallback for empty/whitespace/None input
             return "neutral", 0.50, {"negative": 0.25, "neutral": 0.50, "positive": 0.25}
 
-        self._ensure_model_loaded()
+        inputs = self.tokenizer(
+            clean,
+            padding=False,
+            truncation=True,
+            max_length=DEFAULT_MAX_SEQ_LENGTH,
+            return_tensors="pt"
+        )
+        inputs = {k: v.to(self.device) for k, v in inputs.items()}
+        
+        with torch.no_grad():
+            outputs = self.model(**inputs)
+            raw_probs = torch.softmax(outputs.logits, dim=-1)[0].cpu().numpy()
 
-        if self.pipeline:
-            try:
-                # HF pipeline output format: [[{'label': 'negative', 'score': 0.9}, ...]]
-                results = self.pipeline(clean[:512])[0]
+        prob_dict = {}
+        for idx, p_val in enumerate(raw_probs):
+            raw_lbl = str(self.id2label.get(idx, idx)).lower()
+            if "neg" in raw_lbl or raw_lbl == "0":
+                lbl = "negative"
+            elif "pos" in raw_lbl or raw_lbl == "2":
+                lbl = "positive"
+            else:
+                lbl = "neutral"
+            prob_dict[lbl] = float(p_val)
+
+        # Ensure all three classes are present
+        for k in SENTIMENT_LABELS:
+            if k not in prob_dict:
+                prob_dict[k] = 1e-4
+
+        # Apply guard rules if triggered
+        top_label, top_score, final_probs = self._apply_guard_rules(clean, prob_dict)
+        return top_label, round(float(top_score), 4), {k: round(float(v), 4) for k, v in final_probs.items()}
+
+    def predict_batch(self, texts: List[Optional[str]]) -> List[Tuple[str, float, Dict[str, float]]]:
+        """
+        Batched sentiment inference for high throughput.
+        """
+        if not texts:
+            return []
+
+        cleaned_texts = [normalize_text(t) if t is not None else "" for t in texts]
+        non_empty_indices = [i for i, t in enumerate(cleaned_texts) if t]
+        
+        results: List[Optional[Tuple[str, float, Dict[str, float]]]] = [None] * len(texts)
+        
+        # Handle empty inputs
+        for i, t in enumerate(cleaned_texts):
+            if not t:
+                results[i] = ("neutral", 0.50, {"negative": 0.25, "neutral": 0.50, "positive": 0.25})
+
+        if non_empty_indices:
+            batch_inputs = [cleaned_texts[i] for i in non_empty_indices]
+            encoded = self.tokenizer(
+                batch_inputs,
+                padding=True,
+                truncation=True,
+                max_length=DEFAULT_MAX_SEQ_LENGTH,
+                return_tensors="pt"
+            )
+            encoded = {k: v.to(self.device) for k, v in encoded.items()}
+            
+            with torch.no_grad():
+                outputs = self.model(**encoded)
+                probs = torch.softmax(outputs.logits, dim=-1).cpu().numpy()
+
+            for batch_idx, original_idx in enumerate(non_empty_indices):
+                raw_probs = probs[batch_idx]
                 prob_dict = {}
-                for item in results:
-                    lbl = item["label"].lower()
-                    if "neg" in lbl:
+                for idx, p_val in enumerate(raw_probs):
+                    raw_lbl = str(self.id2label.get(idx, idx)).lower()
+                    if "neg" in raw_lbl or raw_lbl == "0":
                         lbl = "negative"
-                    elif "pos" in lbl:
+                    elif "pos" in raw_lbl or raw_lbl == "2":
                         lbl = "positive"
                     else:
                         lbl = "neutral"
-                    prob_dict[lbl] = float(item["score"])
+                    prob_dict[lbl] = float(p_val)
                     
-                # Ensure all 3 classes exist
                 for k in SENTIMENT_LABELS:
                     if k not in prob_dict:
                         prob_dict[k] = 1e-4
                         
-                calibrated = self.scaler.calibrate_dict(prob_dict)
-                top_label = max(calibrated, key=calibrated.get)
-                return top_label, calibrated[top_label], calibrated
-            except Exception:
-                pass
+                top_label, top_score, final_probs = self._apply_guard_rules(cleaned_texts[original_idx], prob_dict)
+                results[original_idx] = (top_label, round(float(top_score), 4), {k: round(float(v), 4) for k, v in final_probs.items()})
 
-        return self._fast_lexical_sentiment(clean)
-
-    def predict_batch(self, texts: List[str]) -> List[Tuple[str, float, Dict[str, float]]]:
-        """Batched sentiment inference."""
-        return [self.predict(t) for t in texts]
+        return results

@@ -13,191 +13,185 @@ Classifies comments into the frozen 8-class taxonomy:
   - neutral
   - positive
 
-Implements the critical 'again' disambiguation rule, mockery vs banter separation,
-and confidence-gated critical complaint identification.
+Uses RoBERTa sentence embeddings + LogisticRegression head + fitted TemperatureScaler.
+Preserves explicit 'again' disambiguation guard rules.
+Protects against low-confidence / unknown / non-English input tie-break bugs with neutral fallback.
 """
 
+import os
 import re
 from typing import Dict, Any, Tuple, List, Optional
+import numpy as np
+import torch
+import joblib
+from transformers import AutoModel, AutoTokenizer
 
-from . import (
+from .constants import (
     TAXONOMY_CATEGORIES,
     CRITICAL_COMPLAINT_CATEGORIES,
     CRITICAL_COMPLAINT_CONFIDENCE_THRESHOLD,
+    LOW_CONFIDENCE_FALLBACK_THRESHOLD,
+    DEFAULT_MAX_SEQ_LENGTH,
 )
-from .preprocessing import normalize_text, extract_features_meta
+from .preprocessing import normalize_text
 from .calibration import TemperatureScaler, default_scaler
 
+# Seed for deterministic evaluation
+torch.manual_seed(42)
 
-# Pattern rules for category scoring and disambiguation
-_FATIGUE_PATTERNS = [
-    r"\b(this ad again|seen this ad|this same ad|saw this ad|another ad|stop showing|every 5 mins|tired of seeing|why is this on my feed|fyp again|haunting my feed|5th time seeing|again and again and again|unskippable ad|every single day|sick of this commercial)\b",
-    r"\b(bro this ad|ad again|stop giving me this ad|seen this 100 times|blocking this ad|report this ad)\b",
-]
-
-_PRODUCT_COMPLAINT_PATTERNS = [
-    r"\b(broke on day|doesn't work|cheap plastic|terrible quality|poor quality|fell apart|stopped working|fake product|defective|ruined|horrible material|waste of money|completely broken|malfunction|does not work|broke immediately|scam product)\b",
-    r"\b(burnt out|smells bad|leaking|damaged item|doesnt turn on|useless product|horrible design|snapped in half|poor steel|battery expanded)\b",
-]
-
-_SERVICE_COMPLAINT_PATTERNS = [
-    r"\b(never arrived|still haven't received|waiting 3 weeks|shipping took|lost package|tracking not updating|customer support won't reply|no response from support|charged twice|refused refund|where is my order|never got mine|no refund|stole my money|billing issue|scammed me)\b",
-    r"\b(support is useless|unauthorized charge|cant track order|delivery failed|never delivered|support refuses|issue a refund|refund or reply|ordered 3 weeks ago|still waiting on my refund|sent the wrong item|overcharged|ghosted my)\b",
-    r"\b(customer support|customer service|shipping delay|delivery took|package was marked|double charged|refuses to issue)\b",
-]
-
-_MOCKERY_PATTERNS = [
-    r"\b(the acting|bro think he|who approved this|cringe|aint no way|npc behavior|clown show|delusional|acting is wild|budget ran out|bro tried so hard|what is this commercial|roast|who made this ad|voiceover is so bad|fake reaction|ai generated actor)\b",
-    r"(🤡|💀|😭|🤣|🤦‍♂️|🤦‍♀️)",
-]
-
-_SPAM_PATTERNS = [
-    r"\b(check out my profile|click link in bio|crypto|forex|free followers|follow for follow|dm me to earn|telegram|whatsapp|promo code in bio|make money fast|whatsapp me|invest with|dm @)\b",
-    r"(t\.me/|bit\.ly/|wa\.me/)",
-]
-
-_BANTER_MEME_PATTERNS = [
-    r"\b(bro got that|rizz|skibidi|fr fr|nah he cookin|let him cook|bro really said|me at 3am|the design is very human|broski|main character|emotional damage|real|sigma|valid|caught in 4k)\b",
-    r"\b(bro took it personally|bro think|i can't even|blud|bro is living in)\b",
-]
-
-_POSITIVE_PATTERNS = [
-    r"\b(bought again|ordered again|purchased again|love it|amazing|best purchase|obsessed|10/10|worth every penny|so good|super fast delivery|great quality|highly recommend|just ordered|cant wait to get mine|got mine yesterday)\b",
-    r"(❤️|🔥|😍|🙌|✨|💯)",
-]
-
-_NEUTRAL_INQUIRY_PATTERNS = [
-    r"\b(how much|where can i buy|is this available|international shipping|what sizes|link please|price\?|does this come in|compatible with|restock date)\b",
-    r"^@\w+(\s+@\w+)*$",  # Friend tagging only
-]
+# Specific domain disambiguation guard patterns
+_REPEAT_PURCHASE_PATTERN = re.compile(r"\b(bought again|ordered again|purchased again|got it again|reordered)\b", re.IGNORECASE)
+_AD_FATIGUE_PATTERN = re.compile(r"\b(this ad again|seen this ad|this same ad|saw this ad|another ad|stop showing me this ad|on my feed again)\b", re.IGNORECASE)
 
 
 class TaxonomyClassifier:
     """
     Stage 2 Custom Ad-Fatigue Taxonomy Classifier.
-    Evaluates contextual signals, handles nuanced edge-cases, calibrates probabilities,
-    and determines critical complaint candidacy.
+    Integrates local RoBERTa embedding backbone with a trained, temperature-calibrated linear head.
     """
-    def __init__(self, scaler: Optional[TemperatureScaler] = None):
-        self.scaler = scaler or default_scaler
-
-    def _score_patterns(self, text: str, lower: str, meta: Dict[str, Any]) -> Dict[str, float]:
-        """Calculates raw evidence scores for each of the 8 taxonomy classes."""
-        scores = {cat: 0.10 for cat in TAXONOMY_CATEGORIES}  # Base prior
+    def __init__(
+        self,
+        model_dir: Optional[str] = None,
+        artifact_path: Optional[str] = None,
+        scaler: Optional[TemperatureScaler] = None,
+    ):
+        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+        self.model_dir = model_dir or os.path.join(base_dir, "data", "models", "twitter-roberta-base-sentiment-latest")
+        self.artifact_path = artifact_path or os.path.join(os.path.dirname(__file__), "artifacts", "taxonomy_model.joblib")
         
-        # 1. Product Complaints
-        for pat in _PRODUCT_COMPLAINT_PATTERNS:
-            if re.search(pat, lower):
-                scores["product_complaint"] += 3.5
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # Load embedding backbone
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_dir, local_files_only=True)
+        self.model = AutoModel.from_pretrained(self.model_dir, local_files_only=True)
+        self.model.to(self.device)
+        self.model.eval()
 
-        # 2. Service Complaints
-        for pat in _SERVICE_COMPLAINT_PATTERNS:
-            if re.search(pat, lower):
-                scores["service_complaint"] += 3.5
+        if not os.path.exists(self.artifact_path):
+            raise FileNotFoundError(
+                f"Trained taxonomy artifact not found at '{self.artifact_path}'. "
+                f"Run 'python backend/nlp/train_models.py' from the repository root to generate it deterministically."
+            )
+            
+        artifact = joblib.load(self.artifact_path)
+        self.clf = artifact["classifier"]
+        fitted_temperature = float(artifact.get("temperature", 1.0))
+        self.scaler = scaler or TemperatureScaler(temperature=fitted_temperature)
+        self.categories = list(TAXONOMY_CATEGORIES)
+        self.cat_to_idx = {cat: i for i, cat in enumerate(self.categories)}
 
-        # 3. Ad Fatigue vs Repeat Purchase Disambiguation
-        # Rule: 'again' means fatigue ONLY when repeated ad exposure is indicated.
-        if meta.get("has_again"):
-            # Check if repeat purchase/satisfaction
-            if any(re.search(p, lower) for p in [r"\bbought again\b", r"\bordered again\b", r"\bpurchased again\b", r"\bgot it again\b"]):
-                scores["positive"] += 4.0
-                scores["fatigue"] = 0.01
-            elif any(re.search(p, lower) for p in [r"\b(this|the|same|another)\s+ad\s+again\b", r"\bbro\s+(this\s+)?ad\s+again\b", r"\bon\s+my\s+feed\s+again\b"]):
-                scores["fatigue"] += 4.5
-            elif meta.get("has_ad_reference"):
-                scores["fatigue"] += 3.0
-            else:
-                # Ambiguous 'again' without ad context - bias to neutral/fatigue depending on tone
-                if "love" in lower or "good" in lower:
-                    scores["positive"] += 2.5
-                else:
-                    scores["fatigue"] += 1.5
+    def _embed_texts(self, texts: List[str]) -> np.ndarray:
+        """Extract mean-pooled embeddings across non-masked token representations."""
+        inputs = self.tokenizer(
+            texts,
+            padding=True,
+            truncation=True,
+            max_length=DEFAULT_MAX_SEQ_LENGTH,
+            return_tensors="pt"
+        )
+        inputs = {k: v.to(self.device) for k, v in inputs.items()}
+        with torch.no_grad():
+            out = self.model(**inputs)
+            mask = inputs["attention_mask"].unsqueeze(-1).expand(out.last_hidden_state.size()).float()
+            sum_emb = torch.sum(out.last_hidden_state * mask, 1)
+            sum_mask = torch.clamp(mask.sum(1), min=1e-9)
+            embeddings = (sum_emb / sum_mask).cpu().numpy()
+        return embeddings
 
-        for pat in _FATIGUE_PATTERNS:
-            if re.search(pat, lower):
-                scores["fatigue"] += 3.0
-
-        # 4. Mockery vs Banter
-        for pat in _MOCKERY_PATTERNS:
-            if re.search(pat, lower):
-                scores["mockery"] += 2.8
-
-        for pat in _BANTER_MEME_PATTERNS:
-            if re.search(pat, lower):
-                scores["banter_meme"] += 3.0
-
-        # Disambiguate mockery vs banter:
-        # If joke is specifically attacking the actor/script/company ad = mockery
-        if meta.get("has_ad_reference") and ("acting" in lower or "commercial" in lower or "clown" in lower or "cringe" in lower):
-            scores["mockery"] += 2.0
-            scores["banter_meme"] = max(0.1, scores["banter_meme"] - 1.5)
-
-        # 5. Spam
-        for pat in _SPAM_PATTERNS:
-            if re.search(pat, lower):
-                scores["spam"] += 4.0
-
-        # 6. Positive
-        for pat in _POSITIVE_PATTERNS:
-            if re.search(pat, lower):
-                scores["positive"] += 2.5
-
-        # 7. Neutral / Inquiries
-        for pat in _NEUTRAL_INQUIRY_PATTERNS:
-            if re.search(pat, lower):
-                scores["neutral"] += 2.5
-                
-        if meta.get("has_question") and scores["product_complaint"] < 1.0 and scores["service_complaint"] < 1.0:
-            scores["neutral"] += 1.5
-
-        return scores
-
-    def classify(self, text: str, sentiment_hint: Optional[str] = None) -> Tuple[str, float, bool, Dict[str, float]]:
+    def _apply_guard_rules(
+        self,
+        clean_text: str,
+        probs: Dict[str, float]
+    ) -> Tuple[str, float, bool, Dict[str, float]]:
         """
-        Classifies comment text into one of the 8 taxonomy classes.
-        
-        Returns:
-            category (str): Top predicted category.
-            confidence (float): Calibrated confidence score [0.0, 1.0].
-            critical_complaint (bool): Whether this satisfies critical complaint threshold.
-            probabilities (Dict[str, float]): Calibrated probability distribution over all 8 classes.
+        Applies documented domain guard rules:
+        - 'bought again' / 'ordered again' -> positive repeat purchase
+        - 'this ad again' -> ad fatigue
+        - Low confidence fallback -> neutral
         """
-        clean = normalize_text(text)
-        if not clean:
-            probs = {cat: 1.0 / len(TAXONOMY_CATEGORIES) for cat in TAXONOMY_CATEGORIES}
-            return "neutral", round(probs["neutral"], 4), False, probs
+        lower = clean_text.lower()
 
-        lower = clean.lower()
-        meta = extract_features_meta(clean)
-        raw_scores = self._score_patterns(clean, lower, meta)
+        # Repeat purchase guard: overrides to positive
+        if _REPEAT_PURCHASE_PATTERN.search(lower):
+            probs = {cat: 0.001 for cat in self.categories}
+            probs["positive"] = 0.992
+            return "positive", 0.992, False, probs
 
-        # Apply sentiment hint alignment
-        if sentiment_hint == "positive" and raw_scores["positive"] > 0.5:
-            raw_scores["positive"] += 1.0
-        elif sentiment_hint == "negative":
-            # Negative hint boosts complaint, fatigue, or mockery
-            if raw_scores["fatigue"] > 1.0:
-                raw_scores["fatigue"] += 1.0
-            if raw_scores["product_complaint"] > 1.0:
-                raw_scores["product_complaint"] += 1.0
-            if raw_scores["service_complaint"] > 1.0:
-                raw_scores["service_complaint"] += 1.0
+        # Ad fatigue guard: overrides to fatigue
+        if _AD_FATIGUE_PATTERN.search(lower):
+            probs = {cat: 0.001 for cat in self.categories}
+            probs["fatigue"] = 0.995
+            return "fatigue", 0.995, False, probs
 
-        # Convert scores to pseudo-logits and calibrate
-        logits = [raw_scores[cat] for cat in TAXONOMY_CATEGORIES]
-        calibrated_probs = self.scaler.calibrate_logits(logits)
-        prob_dict = {cat: prob for cat, prob in zip(TAXONOMY_CATEGORIES, calibrated_probs)}
+        top_cat = max(probs, key=probs.get)
+        confidence = probs[top_cat]
 
-        # Find top class
-        top_cat = max(prob_dict, key=prob_dict.get)
-        confidence = prob_dict[top_cat]
+        # Low-confidence / uncertainty fallback: if top prediction is below threshold, fallback to neutral
+        if confidence < LOW_CONFIDENCE_FALLBACK_THRESHOLD:
+            top_cat = "neutral"
 
-        # Critical Complaint Verification
-        # Eligible: product_complaint or service_complaint WITH confidence >= 0.85
-        # Keyword alone without meeting the calibrated confidence threshold is NOT critical.
         is_critical = (
             top_cat in CRITICAL_COMPLAINT_CATEGORIES
             and confidence >= CRITICAL_COMPLAINT_CONFIDENCE_THRESHOLD
         )
+        return top_cat, round(confidence, 4), is_critical, probs
 
-        return top_cat, round(confidence, 4), is_critical, prob_dict
+    def classify(
+        self,
+        text: Optional[str],
+        sentiment_hint: Optional[str] = None
+    ) -> Tuple[str, float, bool, Dict[str, float]]:
+        """
+        Classifies comment text into one of the 8 taxonomy classes.
+        
+        Returns:
+            category (str): Top predicted taxonomy category.
+            confidence (float): Calibrated confidence score [0.0, 1.0].
+            critical_complaint (bool): True iff category in {product, service}_complaint AND confidence >= 0.85.
+            probabilities (Dict[str, float]): Full calibrated probability distribution.
+        """
+        clean = normalize_text(text) if text is not None else ""
+        if not clean:
+            # Deterministic uniform prior with neutral fallback for empty/whitespace/None
+            uniform = round(1.0 / len(self.categories), 4)
+            probs = {cat: uniform for cat in self.categories}
+            return "neutral", uniform, False, probs
+
+        emb = self._embed_texts([clean])
+        logits = self.clf.decision_function(emb)[0]
+        calibrated_probs = self.scaler.calibrate_logits(logits)
+        
+        prob_dict = {cat: float(p) for cat, p in zip(self.categories, calibrated_probs)}
+        return self._apply_guard_rules(clean, prob_dict)
+
+    def classify_batch(
+        self,
+        texts: List[Optional[str]]
+    ) -> List[Tuple[str, float, bool, Dict[str, float]]]:
+        """
+        Batched taxonomy classification for high throughput.
+        """
+        if not texts:
+            return []
+
+        cleaned_texts = [normalize_text(t) if t is not None else "" for t in texts]
+        non_empty_indices = [i for i, t in enumerate(cleaned_texts) if t]
+        
+        results: List[Optional[Tuple[str, float, bool, Dict[str, float]]]] = [None] * len(texts)
+        uniform = round(1.0 / len(self.categories), 4)
+        
+        for i, t in enumerate(cleaned_texts):
+            if not t:
+                results[i] = ("neutral", uniform, False, {cat: uniform for cat in self.categories})
+
+        if non_empty_indices:
+            batch_texts = [cleaned_texts[i] for i in non_empty_indices]
+            embeddings = self._embed_texts(batch_texts)
+            all_logits = self.clf.decision_function(embeddings)
+            
+            for batch_idx, original_idx in enumerate(non_empty_indices):
+                logits = all_logits[batch_idx]
+                calibrated_probs = self.scaler.calibrate_logits(logits)
+                prob_dict = {cat: float(p) for cat, p in zip(self.categories, calibrated_probs)}
+                results[original_idx] = self._apply_guard_rules(cleaned_texts[original_idx], prob_dict)
+
+        return results
