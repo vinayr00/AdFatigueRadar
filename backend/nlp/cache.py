@@ -133,7 +133,17 @@ class NLPCache:
         preproc_ver: str = PREPROCESSING_VERSION
     ) -> None:
         """Stores an NLPResult in both memory and SQLite cache."""
-        key = self.generate_key(result.comment_id, model_ver, preproc_ver)
+        self.put(result.comment_id, result, model_ver, preproc_ver)
+
+    def put(
+        self,
+        key_or_text: str,
+        result: NLPResult,
+        model_ver: str = MODEL_VERSION,
+        preproc_ver: str = PREPROCESSING_VERSION
+    ) -> None:
+        """Stores an NLPResult in both memory and SQLite cache keyed by comment_id or text."""
+        key = self.generate_key(key_or_text, model_ver, preproc_ver)
         data_dict = result.to_dict()
         self.memory_cache[key] = data_dict
 

@@ -73,6 +73,12 @@ class NLPResult:
         }
 
 
+from .signals import CardiffNLPSignals, preprocess_for_twitter_roberta
+from .pii_sanitizer import PIISanitizer
+from .deduplication import Deduplicator, jaccard_similarity
+from .annotation_pipeline import compute_cohens_kappa, resolve_and_adjudicate, validate_annotation_record
+
+
 __all__ = [
     "MODEL_VERSION",
     "PREPROCESSING_VERSION",
@@ -85,4 +91,12 @@ __all__ = [
     "DEFAULT_MAX_SEQ_LENGTH",
     "CommentEvent",
     "NLPResult",
+    "CardiffNLPSignals",
+    "preprocess_for_twitter_roberta",
+    "PIISanitizer",
+    "Deduplicator",
+    "jaccard_similarity",
+    "compute_cohens_kappa",
+    "resolve_and_adjudicate",
+    "validate_annotation_record",
 ]

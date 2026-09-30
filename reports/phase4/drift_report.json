@@ -1,0 +1,30 @@
+{
+  "status": "CRITICAL",
+  "psi_score": 4.6866,
+  "js_divergence": 0.2556,
+  "sample_window_size": 365,
+  "critical_complaint_rate": 0.2,
+  "avg_confidence": 0.8564,
+  "low_confidence_rate": 0.0027,
+  "baseline_distribution": {
+    "product_complaint": 0.1405,
+    "service_complaint": 0.0669,
+    "fatigue": 0.0702,
+    "mockery": 0.1371,
+    "spam": 0.0435,
+    "banter_meme": 0.1338,
+    "neutral": 0.2709,
+    "positive": 0.1371
+  },
+  "current_distribution": {
+    "product_complaint": 0.0,
+    "service_complaint": 0.2027,
+    "fatigue": 0.2,
+    "mockery": 0.2,
+    "spam": 0.1973,
+    "banter_meme": 0.0,
+    "neutral": 0.0,
+    "positive": 0.2
+  },
+  "last_evaluated_utc": "2026-09-30T15:39:54.371950+00:00"
+}

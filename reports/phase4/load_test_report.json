@@ -1,0 +1,59 @@
+{
+  "timestamp_utc": "2026-09-30T15:39:54.344839+00:00",
+  "load_test_summary": {
+    "concurrency_1": {
+      "concurrent_workers": 1,
+      "total_requests": 4,
+      "duration_sec": 0.04,
+      "requests_per_sec": 106.7,
+      "p50_ms": 6.57,
+      "p95_ms": 16.34,
+      "p99_ms": 17.69,
+      "error_rate_pct": 0.0
+    },
+    "concurrency_5": {
+      "concurrent_workers": 5,
+      "total_requests": 20,
+      "duration_sec": 0.11,
+      "requests_per_sec": 188.2,
+      "p50_ms": 5.31,
+      "p95_ms": 6.03,
+      "p99_ms": 6.12,
+      "error_rate_pct": 0.0
+    },
+    "concurrency_10": {
+      "concurrent_workers": 10,
+      "total_requests": 40,
+      "duration_sec": 0.2,
+      "requests_per_sec": 197.3,
+      "p50_ms": 5.02,
+      "p95_ms": 5.58,
+      "p99_ms": 6.1,
+      "error_rate_pct": 0.0
+    },
+    "concurrency_25": {
+      "concurrent_workers": 25,
+      "total_requests": 100,
+      "duration_sec": 0.59,
+      "requests_per_sec": 170.8,
+      "p50_ms": 5.58,
+      "p95_ms": 7.28,
+      "p99_ms": 7.48,
+      "error_rate_pct": 0.0
+    },
+    "concurrency_50": {
+      "concurrent_workers": 50,
+      "total_requests": 200,
+      "duration_sec": 1.13,
+      "requests_per_sec": 176.5,
+      "p50_ms": 5.62,
+      "p95_ms": 6.53,
+      "p99_ms": 6.79,
+      "error_rate_pct": 0.0
+    }
+  },
+  "system_stability": "STABLE",
+  "max_concurrent_workers_tested": 50,
+  "peak_requests_per_sec": 197.3,
+  "overall_error_rate_pct": 0.0
+}
