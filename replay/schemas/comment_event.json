@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CommentEvent",
+  "description": "Frozen contract §5.1. author_id is raw — HMAC-replaced at ingestion boundary.",
+  "type": "object",
+  "required": ["event_id", "timestamp", "campaign_id", "ad_id", "author_id", "text"],
+  "properties": {
+    "event_id":    {"type": "string"},
+    "timestamp":   {"type": "string", "format": "date-time"},
+    "campaign_id": {"type": "string"},
+    "ad_id":       {"type": "string"},
+    "author_id":   {"type": "string", "description": "Raw author ID — HMAC-replaced at ingestion"},
+    "text":        {"type": "string"},
+    "reactions":   {"type": "integer", "default": 0},
+    "replies":     {"type": "integer", "default": 0}
+  }
+}

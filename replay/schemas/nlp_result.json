@@ -1,0 +1,15 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NLPResult",
+  "description": "Frozen contract §5.3. comment_id matches CommentEvent.event_id.",
+  "type": "object",
+  "required": ["comment_id", "sentiment", "sentiment_score", "category", "confidence", "critical_complaint"],
+  "properties": {
+    "comment_id":        {"type": "string"},
+    "sentiment":         {"type": "string", "enum": ["positive", "negative", "neutral"]},
+    "sentiment_score":   {"type": "number", "minimum": 0, "maximum": 1, "description": "Magnitude in [0,1]. Sign derived from sentiment field."},
+    "category":          {"type": "string", "description": "One of 8 canonical categories"},
+    "confidence":        {"type": "number", "minimum": 0, "maximum": 1, "description": "Calibrated confidence"},
+    "critical_complaint":{"type": "boolean"}
+  }
+}
