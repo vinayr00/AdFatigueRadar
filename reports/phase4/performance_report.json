@@ -1,0 +1,45 @@
+{
+  "timestamp_utc": "2026-09-30T15:39:52.273991+00:00",
+  "device": "cuda",
+  "device_name": "NVIDIA GeForce GTX 1650",
+  "single_item_metrics": {
+    "p50_ms": 53.82,
+    "p95_ms": 61.36,
+    "p99_ms": 69.43,
+    "mean_ms": 54.65,
+    "throughput_items_sec": 18.3
+  },
+  "batch_metrics": {
+    "batch_size_1": {
+      "batch_size": 1,
+      "avg_batch_latency_ms": 58.19,
+      "per_item_latency_ms": 58.19,
+      "throughput_items_sec": 17.2
+    },
+    "batch_size_4": {
+      "batch_size": 4,
+      "avg_batch_latency_ms": 222.43,
+      "per_item_latency_ms": 55.61,
+      "throughput_items_sec": 18.0
+    },
+    "batch_size_8": {
+      "batch_size": 8,
+      "avg_batch_latency_ms": 427.32,
+      "per_item_latency_ms": 53.41,
+      "throughput_items_sec": 18.7
+    },
+    "batch_size_16": {
+      "batch_size": 16,
+      "avg_batch_latency_ms": 880.7,
+      "per_item_latency_ms": 55.04,
+      "throughput_items_sec": 18.2
+    },
+    "batch_size_32": {
+      "batch_size": 32,
+      "avg_batch_latency_ms": 1977.46,
+      "per_item_latency_ms": 61.8,
+      "throughput_items_sec": 16.2
+    }
+  },
+  "vram_usage_mb": 961.59
+}

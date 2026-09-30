@@ -1,0 +1,69 @@
+{
+  "audit_version": "v5.0.0-FINAL-E2E",
+  "generated_at_utc": "2026-09-30T16:22:00+00:00",
+  "synthetic_baseline_phase0": {
+    "accuracy": 0.9500,
+    "macro_f1": 0.9499,
+    "calibration_temperature": 0.5467,
+    "calibration_ece": 0.0163,
+    "p50_latency_ms": 56.57,
+    "batch_throughput_items_sec": 199.29
+  },
+  "real_world_baseline_phase2": {
+    "test_size": 299,
+    "accuracy": 0.2809,
+    "macro_precision": 0.3623,
+    "macro_recall": 0.2816,
+    "macro_f1": 0.2711,
+    "weighted_f1": 0.2685
+  },
+  "real_world_final_candidate_phase3": {
+    "candidate_id": "PHASE3_FINAL_FUSED_ROBERTA_LR",
+    "architecture": "RoBERTa 768-dim Embeddings + RoBERTa 3-dim Sentiment Posteriors + Calibrated Logistic Regression",
+    "test_size": 299,
+    "accuracy": 0.6555,
+    "accuracy_delta_vs_baseline": 0.3746,
+    "macro_precision": 0.6531,
+    "macro_recall": 0.6131,
+    "macro_f1": 0.6200,
+    "macro_f1_delta_vs_baseline": 0.3489,
+    "weighted_precision": 0.6519,
+    "weighted_recall": 0.6555,
+    "weighted_f1": 0.6472,
+    "calibration_temperature": 1.0494,
+    "calibration_ece": 0.0626,
+    "brier_score": 0.4798
+  },
+  "subpopulation_and_stress_metrics": {
+    "ood_50_accuracy": 0.4200,
+    "ood_50_macro_f1": 0.1696,
+    "multilingual_16_accuracy": 0.1875,
+    "multilingual_16_macro_f1": 0.1167,
+    "stress_64_accuracy": 0.6094,
+    "stress_64_macro_f1": 0.6296
+  },
+  "operational_threshold_metrics": {
+    "critical_complaint_threshold": 0.50,
+    "validation_precision": 0.7941,
+    "validation_recall": 0.4576,
+    "validation_f1": 0.5806
+  },
+  "production_serving_metrics_phase4": {
+    "device": "cuda (NVIDIA GeForce GTX 1650)",
+    "vram_allocated_mb": 961.59,
+    "single_item_p50_ms": 53.82,
+    "single_item_p95_ms": 61.36,
+    "single_item_p99_ms": 69.43,
+    "single_item_throughput_items_sec": 18.3,
+    "concurrency_tested": [1, 5, 10, 25, 50],
+    "peak_load_throughput_rps": 197.3,
+    "load_test_error_rate_pct": 0.0
+  },
+  "regression_tests": {
+    "total_tests": 59,
+    "passed": 59,
+    "failed": 0,
+    "errors": 0,
+    "duration_sec": 45.27
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "dataset_name": "AdFatigueRadar_real_world_ood",
+  "dataset_version": "real-world-v1.0",
+  "creation_timestamp": "2026-09-30T13:55:48.511280+00:00",
+  "split": "real_world_ood",
+  "record_count": 150,
+  "class_distribution": {
+    "service_complaint": 3,
+    "product_complaint": 35,
+    "fatigue": 2,
+    "mockery": 2,
+    "spam": 35,
+    "banter_meme": 2,
+    "neutral": 35,
+    "positive": 36
+  },
+  "language_distribution": {
+    "en": 150
+  },
+  "source_provenance": {
+    "tech_b2b_saas": 150
+  },
+  "preprocessing_version": "normalize_text_v1.0",
+  "pii_sanitization_version": "pii-sanitizer-v1.0",
+  "deduplication_version": "dedup-v1.0",
+  "annotation_guideline_version": "v2.0-real-world",
+  "leakage_guarantee": "0 exact and 0 near-duplicate matches across all 4 splits"
+}

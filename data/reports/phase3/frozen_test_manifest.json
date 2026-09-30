@@ -1,0 +1,18 @@
+{
+  "dataset_name": "AdFatigueRadar_RealWorld_HeldOut_Test",
+  "dataset_version": "real-world-v1.0-FROZEN",
+  "frozen_at_utc": "2026-09-30T15:22:26.992480+00:00",
+  "sample_count": 299,
+  "sha256_hash": "82dacabc7b54812ce7455e68cf66cbdb6402228bab9fb5ccb35f197846e67112",
+  "class_distribution": {
+    "spam": 13,
+    "product_complaint": 42,
+    "positive": 41,
+    "mockery": 41,
+    "fatigue": 21,
+    "banter_meme": 40,
+    "neutral": 81,
+    "service_complaint": 20
+  },
+  "access_policy": "STRICTLY LOCKED. Evaluated ONLY ONCE after candidate selection."
+}

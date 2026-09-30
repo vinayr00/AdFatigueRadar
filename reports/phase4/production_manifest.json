@@ -1,0 +1,66 @@
+{
+  "manifest_version": "v4.0.0-PROD",
+  "generated_at_utc": "2026-09-30T15:39:54.373949+00:00",
+  "model_identity": {
+    "candidate_id": "PHASE3_FINAL_FUSED_ROBERTA_LR",
+    "model_version": "adfatigue-nlp-v2.0",
+    "preprocessing_version": "preproc-v2.0",
+    "architecture": "Two-Stage Multi-Signal (RoBERTa 768-dim Embeddings + RoBERTa 3-dim Sentiment Posteriors + Calibrated Logistic Regression)",
+    "operational_threshold": 0.5,
+    "calibrated_temperature": 1.0494,
+    "test_accuracy": 0.6555,
+    "test_macro_f1": 0.62,
+    "test_weighted_f1": 0.6472
+  },
+  "serving_configuration": {
+    "framework": "FastAPI + Uvicorn",
+    "active_device": "cuda",
+    "device_hardware": "NVIDIA GeForce GTX 1650",
+    "vram_allocated_mb": 961.59,
+    "endpoints": [
+      {
+        "path": "/api/nlp/predict",
+        "method": "POST",
+        "desc": "Single comment inference"
+      },
+      {
+        "path": "/api/nlp/predict/batch",
+        "method": "POST",
+        "desc": "Batch comment inference"
+      },
+      {
+        "path": "/health",
+        "method": "GET",
+        "desc": "Liveness probe"
+      },
+      {
+        "path": "/ready",
+        "method": "GET",
+        "desc": "Readiness probe"
+      },
+      {
+        "path": "/api/nlp/metrics",
+        "method": "GET",
+        "desc": "Runtime telemetry & cache metrics"
+      },
+      {
+        "path": "/api/nlp/drift",
+        "method": "GET",
+        "desc": "Prediction distribution drift status"
+      }
+    ]
+  },
+  "performance_profile": {
+    "p50_ms": 53.82,
+    "p95_ms": 61.36,
+    "p99_ms": 69.43,
+    "mean_ms": 54.65,
+    "throughput_items_sec": 18.3
+  },
+  "concurrency_profile": {
+    "max_workers": 50,
+    "peak_rps": 197.3,
+    "error_rate": 0.0
+  },
+  "security_verdict": "SECURE"
+}

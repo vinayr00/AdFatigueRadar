@@ -1,0 +1,293 @@
+AdFatigueRadar — PERSON 2Backend / Risk / Action Execution Specification
+Isolated parallel-work package • P0 first • P1/P2 extensions
+1. Mission and Boundary
+Person 2 owns the backend decision and protection layer. This includes feature aggregation, the two-score risk engine, severity/state machine, action gates, sandbox action execution/readback, audit logging, security, threshold validation, and backend API contracts.
+P0 outcome: deterministic risk/state/action backend that can safely consume NLP outputs and replay telemetry.
+P1 outcome: threshold endpoint/UI contract, webhook/local mock, baselines, lag analysis, economic comparison support.
+P2 outcome: optional predictor integration and advanced operator controls.
+Person 2 does NOT own NLP model internals, replay scenario generation, frontend implementation, or potential-world curve generation.
+2. Non-Negotiable Isolation Rules
+Person 2 may modify backend/api/, backend/risk/, backend/actions/, backend/models/ and backend/main.py only where backend integration is required.
+Person 2 may create backend/tests/risk/, backend/tests/actions/, backend/tests/api/.
+Person 2 owns config/thresholds.yaml and scripts/check_config.py because these define backend decision policy.
+Person 2 must NOT edit backend/nlp/.
+Person 2 must NOT edit replay/scenarios/ or replay/generated/.
+Person 2 must NOT edit frontend/.
+Person 2 must NOT author or relabel training/test datasets.
+Person 2 must NOT tune NLP model behavior.
+Person 2 must NOT modify frozen event schemas without proposing a contract change first.
+Person 2 must not create a second economic simulation model. Use the shared ActionSimulation interface.
+Do not modify another person's files merely to resolve a merge conflict; report it.
+3. Exact File Ownership
+backend/├── api/│   ├── routes_campaigns.py│   ├── routes_actions.py│   ├── routes_thresholds.py│   ├── routes_webhooks.py│   └── auth.py├── risk/│   ├── aggregation.py│   ├── features.py│   ├── normalization.py│   ├── wilson.py│   ├── audience_risk.py│   ├── economic_risk.py│   ├── state_machine.py│   ├── gates.py│   ├── staleness.py│   └── engine.py├── actions/│   ├── base.py│   ├── sandbox.py│   ├── simulator.py│   ├── readback.py│   └── audit.py├── models/│   └── backend_models.py├── tests/│   ├── risk/│   ├── actions/│   └── api/└── main.pyconfig/└── thresholds.yamlscripts/└── check_config.pydocs/└── person2_backend_risk_report.md
+If equivalent files already exist, extend them rather than creating duplicate modules.
+4. Read-Only Inputs from Other Owners
+backend/nlp/* — Person 1
+data/training/* — Person 1
+data/test_human_audited/* — Person 1
+replay/schemas/* — shared frozen contract
+replay/scenarios/* — Person 3
+replay/generated/* — Person 3
+frontend/* — Person 3
+5. Frozen Input Contracts
+5.1 CommentEvent
+{  "event_id": "comment_0001",  "timestamp": "2026-09-30T12:00:00Z",  "campaign_id": "campaign_01",  "ad_id": "ad_07",  "author_id": "author_184",  "text": "Bro this ad again 😂",  "reactions": 12,  "replies": 3}
+5.2 TelemetryEvent
+{  "event_id": "telemetry_0001",  "timestamp": "2026-09-30T12:00:00Z",  "campaign_id": "campaign_01",  "ad_id": "ad_07",  "spend": 4500,  "impressions": 52000,  "reach": 36000,  "clicks": 4200,  "conversions": 190,  "cpm": 86.54,  "cpc": 1.07,  "cpa": 23.68,  "roas": 3.8}
+5.3 NLPResult
+{  "comment_id": "comment_0001",  "sentiment": "negative",  "sentiment_score": 0.91,  "category": "fatigue",  "confidence": 0.94,  "critical_complaint": false}
+6. Required Risk Engine
+6.1 Audience Risk
+audience_risk =  0.30 × harmful_negative_ratio_signal+ 0.25 × sentiment_decay_signal+ 0.20 × fatigue_mockery_signal+ 0.10 × comment_acceleration_signal+ 0.10 × ctr_frequency_signal+ 0.05 × critical_complaint_signal
+6.2 Economic Risk
+economic_risk =  0.55 × cpa_cpm_signal+ 0.45 × roas_conversion_signal
+6.3 Normalization
+signal = clip((x - low) / (high - low), 0, 1)
+Use thresholds.yaml as the single source of normalization bounds.
+Never silently substitute alternate bounds inside Python.
+7. Exact Feature Definitions
+7.1 Harmful Negative Ratio
+Weighted harmful share:
+product_complaint = 1.00service_complaint  = 1.00fatigue            = 0.80mockery            = 0.75spam               = 0.60banter_meme        = 0.00neutral            = 0.00positive           = 0.00
+Apply Wilson lower bound to the fractional harmful count.
+Do not use raw Stage-1 negative sentiment for the production harmful ratio.
+7.2 Sentiment Decay
+Use category-aware weighted sentiment so banter_meme cannot inflate the decay signal.
+Compute decay over the configured rolling/guard window.
+Use EWMA alpha from thresholds.yaml.
+7.3 Fatigue / Mockery
+Use the configured category mix.
+Do not infer fatigue solely from a keyword such as 'again'; rely on Person 1's category output.
+7.4 Comment Acceleration
+Measure change in comment rate over time using the configured five-minute step.
+Do not count a single author's burst as independent evidence; anomaly controls apply.
+7.5 CTR / Frequency
+ctr_frequency_signal = mean(norm(ctr_decay_pct), norm(frequency_increase_pct))
+7.6 Critical Complaint
+Consume Person 1's critical_complaint flag and aggregate its rate.
+The production Path B gate also requires confidence/evidence/persistence/anomaly conditions.
+7.7 Economic Signals
+cpa_cpm_signal = max(norm(cpa_delta_pct), norm(cpm_delta_pct))roas_conversion_signal = max(norm(roas_drop_pct), norm(conv_rate_drop_pct))
+8. Wilson Lower Bound
+Implement the Wilson lower bound for fractional harmful counts. Required confidence z = 1.96.
+p = k_eff / ncenter = (p + z*z/(2*n)) / (1 + z*z/n)margin = z * sqrt((p*(1-p) + z*z/(4*n)) / n) / (1 + z*z/n)wilson_lb = center - margin
+Guard n <= 0.
+Keep k_eff within [0,n].
+Run calibration checks at n = 24, 30, 60, 120, 480.
+9. Anomaly Controls
+top_author_share > 0.30 → anomaly true.
+duplicate_cluster_share > 0.40 → anomaly true.
+per-author maximum comments per rolling window = 3 before aggregation.
+Path B emergency pause is blocked whenever anomaly is true.
+Do not remove suspicious comments from the dataset; flag them and preserve auditability.
+10. Severity and Campaign State
+Keep severity and campaign state as separate concepts.
+Severity:HEALTHY / WATCH / WARNING / CRITICALCampaign state:ACTIVE / SOFT_REDUCED / PAUSED / BLOCKED
+Do not encode severity directly as state.
+State transitions must be deterministic and auditable.
+11. Gate Logic
+11.1 WATCH
+audience_risk >= 0.50.
+11.2 WARNING
+audience_risk >= 0.65 for 0.5 simulated hours.
+WARNING is alert-only; it must not change campaign state.
+11.3 SOFT_REDUCED
+audience_risk >= 0.75 for 1.0 simulated hour.
+Apply soft_budget_multiplier = 0.80 through the shared ActionSimulation interface.
+11.4 PAUSE Path A
+audience_risk >= 0.85.
+economic_risk >= 0.70.
+At least 20 conversions in rolling hour.
+Evidence thresholds pass.
+Classifier confidence threshold passes.
+Wilson lower-bound threshold passes.
+Persistence requirement passes.
+Cooldown is clear.
+Readback must be verified after action.
+11.5 PAUSE Path B — Emergency Critical Complaint
+Critical complaint rate >= 0.20.
+Critical complaint confidence >= 0.85.
+At least 10 distinct authors.
+Anomaly must be false.
+Persistence = 0.25 simulated hours.
+Cooldown clear.
+This path can operate without economic confirmation because the trigger itself is the critical-complaint emergency condition.
+11.6 Recovery / Hysteresis
+Soft recovery threshold = 0.60.
+Warning recovery threshold = 0.45.
+Recovery persistence = 1.0 hour.
+Unpause is explicit/operator-controlled unless the final state rules explicitly permit recovery.
+Manual BLOCKED state must not auto-recover.
+12. Staleness
+stale_after_steps = 2.
+Check ACTIVE and SOFT_REDUCED.
+Paused campaigns emit zero-volume heartbeat telemetry every five minutes.
+Do not mark PAUSED campaigns stale merely because CPA is null.
+Fresh telemetry clears stale condition automatically where permitted.
+13. Economic Action Simulation
+Person 2 owns the shared runtime action/simulation interface; Person 3 owns generation of potential-world curves.
+class ActionSimulation:    def apply(self, potential_event, campaign_state):        ...
+ACTIVE → full potential volume.
+SOFT_REDUCED → volume × 0.80.
+PAUSED → zero new spend/volume, but heartbeat telemetry continues.
+CPA is null when conversions are zero; never emit infinity.
+Protected and no-action simulations must consume identical potential-world curves and identical seeds.
+14. Economic Evaluation
+excess_cost = spend * max(0, 1 - baseline_CPA/current_CPA)excess_cost_avoided = no_action_excess_cost - protected_excess_costconversions_forgone = max(0, no_action_conversions - protected_conversions)tradeoff = excess_cost_avoided / max(1, conversions_forgone)
+Never call raw spend reduction 'savings'.
+Report excess cost avoided per conversion forgone.
+Report action timing and false-positive behavior.
+15. Sandbox Action Execution
+P0 action mode is SANDBOX only.
+PAUSE must be idempotent.
+After action, perform readback verification.
+Readback failure fails closed.
+Record previous state and new state.
+Record reason codes, risk values, config version, confidence, and audit ID.
+16. Frozen Action Output
+{  "action": "PAUSE",  "mode": "SANDBOX",  "executed": true,  "confidence": 0.92,  "reason": "Sustained harmful fatigue signals with economic confirmation",  "previous_state": "SOFT_REDUCED",  "new_state": "PAUSED",  "readback_verified": true,  "audit_event_id": "audit_00041"}
+17. Audit Event
+{  "audit_id": "audit_00041",  "timestamp_simulated": "2026-09-30T14:30:00Z",  "campaign_id": "campaign_01",  "actor_type": "SYSTEM",  "action": "PAUSE",  "previous_state": "SOFT_REDUCED",  "new_state": "PAUSED",  "reason_codes": ["AUDIENCE_RISK_HIGH","ECONOMIC_CONFIRMATION"],  "risk": {"audience_risk": 0.89, "economic_risk": 0.78},  "readback_verified": true,  "config_version": "thresholds_v4"}
+18. Security Requirements
+All mutating endpoints require an API-key header.
+API key must be server-side and loaded from environment configuration.
+Threshold updates must be validated against safe bounds.
+Threshold changes must be audit logged.
+Provider/Slack secrets must remain in environment variables.
+No secret may be committed to the repository.
+React is responsible for escaping comment text; backend should still return plain data rather than HTML.
+Author identifiers should be HMAC-derived with an environment secret when persisted or exposed.
+Fail closed on missing/uncertain evidence or readback failure.
+19. Frozen API Surface
+GET /campaigns/{campaign_id}/status
+GET /campaigns/{campaign_id}/timeline
+GET /campaigns/{campaign_id}/stream
+GET /campaigns/{campaign_id}/audit
+POST /campaigns/{campaign_id}/replay/start?speed={speed}
+POST /campaigns/{campaign_id}/replay/reset
+POST /campaigns/{campaign_id}/pause
+POST /campaigns/{campaign_id}/unpause
+POST /campaigns/{campaign_id}/override
+PUT /campaigns/{campaign_id}/thresholds
+POST /webhooks/slack/test
+P0 mutating endpoints require API-key authentication. Override is P2 unless needed to explicitly support BLOCKED-state operations.
+20. Threshold Configuration
+Use the authoritative thresholds_v4 configuration supplied in the master specification. Do not invent new production thresholds.
+config_version: thresholds_v4step_minutes: 5guard_window_minutes: 60ewma_alpha: 0.30audience gates:  watch 0.50  warning 0.65  soft 0.75  critical 0.85  pause_audience 0.85economic:  pause_gate 0.70  min_conversions_in_window 20baseline_a_cpa_multiplier 1.25cooldown_minutes 60
+The complete authoritative YAML belongs in the repository and must be checked by scripts/check_config.py. The abbreviated values above are orientation only; do not replace the full configuration with this excerpt.
+21. Config Checker
+Validate weight sums.
+Validate gate ordering: watch < warning < soft < critical.
+Validate recovery thresholds below entry thresholds.
+Validate banter_meme weight = 0.
+Validate every safe bound.
+Print Wilson calibration requirements.
+Run the supplied worked example and confirm the expected approximate audience/economic risk values from the master specification.
+Reject unsafe threshold updates at the API layer even if YAML is edited manually.
+22. P0 Implementation Order
+Create backend-owned modules and tests.
+Implement typed input/output models.
+Implement rolling-window aggregation.
+Implement Wilson lower bound.
+Implement normalization from thresholds_v4.
+Implement audience risk.
+Implement economic risk and N/A behavior below 20 conversions.
+Implement anomaly controls.
+Implement severity calculation.
+Implement campaign state machine with hysteresis/persistence/cooldown.
+Implement ActionSimulation interface and sandbox action adapter.
+Implement pause/readback/audit.
+Implement staleness handling and paused heartbeats.
+Implement API-key protection and safe threshold validation.
+Implement required endpoints.
+Run all P0 acceptance tests.
+23. P1 Work
+Threshold GET/PUT UI contract.
+Slack webhook or local webhook mock.
+Raw CPA baseline using baseline_a_cpa_multiplier = 1.25.
+Smoothed CPA/CPM baseline.
+Sentiment-only baseline integration.
+Lag diagnostics.
+Multi-seed lead-time distribution calculations.
+Protected vs no-action economic comparison API/data contract.
+24. P2 Work
+Integrate Person 1's optional predictor output.
+Advanced brigading/manipulation detection.
+Advanced operator controls.
+Optimization/quantization support where justified.
+Docker/model-volume polish if required.
+25. Tests Person 2 Must Deliver
+Two-score arithmetic matches check_config.py.
+Wilson calibration at n = 24, 30, 60, 120, 480.
+Low-volume lull respects minimum evidence.
+WARNING can trigger without economics.
+SOFT_REDUCED can trigger without economics.
+Path A cannot pause when economic risk is N/A.
+Path B is blocked when anomaly is true.
+Paused heartbeat prevents stale-state failure.
+CPA is null, never infinity, when conversions are zero.
+CPM-only negative control does not pause.
+Banter storm with stable economics does not combined-pause.
+Sentiment-only baseline may false-positive under banter.
+Protected replay changes runtime volume.
+Protected/no-action share identical potential-world curves.
+API-key rejection works.
+Threshold safe-bound rejection works.
+Threshold changes are audited.
+Readback failure fails closed.
+Pause is idempotent.
+HMAC author IDs are stable and non-reversible without secret.
+XSS-safe API payload behavior.
+Staleness recovery works after fresh telemetry.
+26. Definition of Done — P0
+Backend can run independently using stubbed/frozen NLP outputs.
+Risk arithmetic exactly matches the authoritative configuration/checker.
+State machine is deterministic and tested.
+WARNING/SOFT/PAUSE gates obey persistence and cooldown.
+Both pause paths are correctly guarded.
+Sandbox pause + readback + audit works.
+Paused heartbeats work.
+Security controls are active.
+All mutating endpoints require API key.
+Thresholds cannot be changed outside safe bounds.
+No Person 1 or Person 3 owned files are modified.
+27. Integration Boundary
+Person 2 receives:
+CommentEvent + NLPResult from Person 1.
+TelemetryEvent and replay records from Person 3.
+Person 2 returns:
+Campaign status/state/severity.
+Audience and economic risk.
+Timeline/audit records.
+Action/readback results.
+Protected/no-action economic metrics.
+Person 2 must not require Person 1's internal model classes or Person 3's scenario generator internals.
+28. Git / Merge Protocol
+Use a dedicated branch such as feature/person2-backend-risk.
+Commits should be grouped by backend concern: contracts, aggregation, risk, state, actions, security, API, tests.
+Before every handoff, run a changed-files audit.
+Do not reformat shared files.
+Do not edit frontend or NLP files to make integration convenient.
+If a shared dependency change is necessary, document it and coordinate through the agreed dependency owner.
+Never copy Person 1's NLP implementation into the backend risk package.
+Never copy Person 3's replay generator into the backend action package.
+29. Final Handoff Checklist
+☐ Backend/risk ownership isolated
+☐ Frozen contracts respected
+☐ thresholds_v4 validated
+☐ Wilson implementation tested
+☐ Audience risk tested
+☐ Economic risk/N/A tested
+☐ State machine tested
+☐ Path A tested
+☐ Path B tested
+☐ Anomaly controls tested
+☐ Sandbox action/readback tested
+☐ Audit events complete
+☐ API-key protection tested
+☐ Threshold safe bounds tested
+☐ Staleness/heartbeat tested
+☐ Economic tradeoff metrics tested
+☐ Changed-files audit clean
+30. One-Line Responsibility
+Person 2 owns: NLP outputs + telemetry → features → audience/economic risk → severity/state → guarded sandbox action → readback/audit/API. Person 2 does not own model training, replay generation, or frontend implementation.

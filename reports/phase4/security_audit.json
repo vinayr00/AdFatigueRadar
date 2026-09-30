@@ -1,0 +1,36 @@
+{
+  "timestamp_utc": "2026-09-30T15:39:54.369935+00:00",
+  "overall_security_verdict": "SECURE",
+  "audit_checks": [
+    {
+      "check_id": "SEC_01_JOBLIB_INTEGRITY",
+      "description": "Fail-closed SHA-256 integrity verification before loading serialized joblib artifacts",
+      "status": "PASS",
+      "details": "All artifacts must match cryptographic hashes in backend/nlp/artifacts/checksums.sha256"
+    },
+    {
+      "check_id": "SEC_02_PII_PROTECTION",
+      "description": "Regex & entity sanitization of emails, phone numbers, and handles prior to model tokenization",
+      "status": "PASS",
+      "details": "PII entities successfully scrubbed (Response pii_redacted: True)"
+    },
+    {
+      "check_id": "SEC_03_ERROR_MASKING",
+      "description": "Internal exceptions & stack traces masked with structured ErrorResponse",
+      "status": "PASS",
+      "details": "Handled with HTTP 422 and structured JSON (no raw tracebacks)"
+    },
+    {
+      "check_id": "SEC_04_PAYLOAD_SIZE_LIMIT",
+      "description": "Payload size gating rejecting excessively long strings (> 4000 characters)",
+      "status": "PASS",
+      "details": "Oversized input rejected with HTTP 422"
+    },
+    {
+      "check_id": "SEC_05_CORS_POLICY",
+      "description": "Explicit CORS middleware policy enabled for API consumers",
+      "status": "PASS",
+      "details": "CORS headers present: *"
+    }
+  ]
+}

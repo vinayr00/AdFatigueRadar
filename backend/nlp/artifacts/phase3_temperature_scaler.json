@@ -1,0 +1,8 @@
+{
+  "temperature": 1.0494,
+  "validation_ece_before": 0.063,
+  "validation_ece_after": 0.0568,
+  "fitted_on": "data/real_world/validation/validation.jsonl",
+  "method": "TemperatureScaling_NLL",
+  "timestamp_utc": "2026-09-30T15:26:02.976046+00:00"
+}

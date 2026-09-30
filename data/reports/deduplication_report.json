@@ -1,0 +1,58 @@
+{
+  "deduplication_version": "dedup-v1.0",
+  "methodology": {
+    "exact_match": "Strict raw text identity",
+    "normalized_match": "Unicode NFKC, lowercase, punctuation removed",
+    "near_duplicate_method": "Token Jaccard similarity",
+    "near_duplicate_threshold": 0.85
+  },
+  "summary": {
+    "records_before": 3060,
+    "exact_duplicates": 1320,
+    "normalized_duplicates": 360,
+    "source_id_duplicates": 0,
+    "near_duplicates_removed": 736,
+    "records_after": 644
+  },
+  "duplicate_groups_count": 1066,
+  "sample_duplicate_groups": {
+    "exact:comm_rw_00001": [
+      "comm_rw_00002",
+      "comm_rw_00003",
+      "comm_rw_00012"
+    ],
+    "norm:comm_rw_00001": [
+      "comm_rw_00004",
+      "comm_rw_00010"
+    ],
+    "exact:comm_rw_00005": [
+      "comm_rw_00009",
+      "comm_rw_00017"
+    ],
+    "exact:comm_rw_00006": [
+      "comm_rw_00011"
+    ],
+    "exact:comm_rw_00008": [
+      "comm_rw_00015"
+    ],
+    "norm:comm_rw_00006": [
+      "comm_rw_00016"
+    ],
+    "exact:comm_rw_00007": [
+      "comm_rw_00019"
+    ],
+    "exact:comm_rw_00021": [
+      "comm_rw_00022",
+      "comm_rw_00023",
+      "comm_rw_00032"
+    ],
+    "norm:comm_rw_00021": [
+      "comm_rw_00024",
+      "comm_rw_00030"
+    ],
+    "exact:comm_rw_00025": [
+      "comm_rw_00029",
+      "comm_rw_00037"
+    ]
+  }
+}

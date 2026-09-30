@@ -1,0 +1,39 @@
+{
+  "manifest_version": "v5.0.0-FINAL",
+  "generated_at_utc": "2026-09-30T16:14:00+00:00",
+  "candidate_id": "PHASE3_FINAL_FUSED_ROBERTA_LR",
+  "git_commit": "dbf6b4206f4c99dec3b8324bdcbc28ad75c926d0",
+  "git_branch": "NlpPipeline",
+  "artifacts": [
+    {
+      "file": "backend/nlp/artifacts/phase3_final_model.joblib",
+      "sha256": "3e4b8fdbc39394ead9b1b8161c3afe5f5001114e2ee848c519523da0151dbee1",
+      "description": "Fitted LogisticRegression head on RoBERTa 768-dim embeddings + 3-dim sentiment features"
+    },
+    {
+      "file": "backend/nlp/artifacts/phase3_temperature_scaler.json",
+      "sha256": "c75a6fbf7fa347e044705a95b8a7e9300510574478e91e7c5b5058dc38481fd6",
+      "description": "Validation-calibrated temperature scaling parameter (T=1.0494)"
+    },
+    {
+      "file": "backend/nlp/artifacts/phase3_class_mapping.json",
+      "sha256": "b17644c5243b0bd8d1e0e8e20572bfc06231caf1791b845867bd057fe9d9a847",
+      "description": "8-class index-to-category taxonomy mapping"
+    },
+    {
+      "file": "backend/nlp/artifacts/phase3_config.json",
+      "sha256": "c1b059c2bc3b251e3afc603e376a21bfa6816824c2a1972b7aa13b7aa27ab5fb",
+      "description": "Model architecture configuration, embedding dimensions, and threshold values"
+    },
+    {
+      "file": "backend/nlp/artifacts/taxonomy_model.joblib",
+      "sha256": "64191b728eb7f9c2866bd9a622740ae2f12140070759ee9c14dffa634f25c4d6",
+      "description": "Baseline taxonomy model bundle"
+    }
+  ],
+  "frozen_test_dataset": {
+    "file": "data/real_world/test/test.jsonl",
+    "record_count": 299,
+    "sha256": "82dacabc48ba6d5ae57df9b647d6928e1d743a6d45f4f46a297920786cfba7e9"
+  }
+}

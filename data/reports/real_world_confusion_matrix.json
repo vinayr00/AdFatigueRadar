@@ -1,0 +1,82 @@
+{
+  "product_complaint": {
+    "product_complaint": 4,
+    "service_complaint": 3,
+    "fatigue": 5,
+    "mockery": 19,
+    "spam": 1,
+    "banter_meme": 5,
+    "neutral": 0,
+    "positive": 5
+  },
+  "service_complaint": {
+    "product_complaint": 0,
+    "service_complaint": 3,
+    "fatigue": 5,
+    "mockery": 8,
+    "spam": 0,
+    "banter_meme": 1,
+    "neutral": 1,
+    "positive": 2
+  },
+  "fatigue": {
+    "product_complaint": 0,
+    "service_complaint": 2,
+    "fatigue": 3,
+    "mockery": 8,
+    "spam": 0,
+    "banter_meme": 2,
+    "neutral": 0,
+    "positive": 6
+  },
+  "mockery": {
+    "product_complaint": 2,
+    "service_complaint": 0,
+    "fatigue": 4,
+    "mockery": 15,
+    "spam": 0,
+    "banter_meme": 18,
+    "neutral": 0,
+    "positive": 2
+  },
+  "spam": {
+    "product_complaint": 0,
+    "service_complaint": 1,
+    "fatigue": 1,
+    "mockery": 5,
+    "spam": 3,
+    "banter_meme": 0,
+    "neutral": 1,
+    "positive": 2
+  },
+  "banter_meme": {
+    "product_complaint": 1,
+    "service_complaint": 1,
+    "fatigue": 1,
+    "mockery": 13,
+    "spam": 0,
+    "banter_meme": 17,
+    "neutral": 5,
+    "positive": 2
+  },
+  "neutral": {
+    "product_complaint": 5,
+    "service_complaint": 2,
+    "fatigue": 25,
+    "mockery": 27,
+    "spam": 0,
+    "banter_meme": 10,
+    "neutral": 9,
+    "positive": 3
+  },
+  "positive": {
+    "product_complaint": 0,
+    "service_complaint": 0,
+    "fatigue": 1,
+    "mockery": 2,
+    "spam": 0,
+    "banter_meme": 5,
+    "neutral": 3,
+    "positive": 30
+  }
+}

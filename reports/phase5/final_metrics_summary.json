@@ -1,0 +1,59 @@
+{
+  "summary_version": "v5.0.0-FINAL",
+  "generated_at_utc": "2026-09-30T16:14:00+00:00",
+  "candidate_id": "PHASE3_FINAL_FUSED_ROBERTA_LR",
+  "model_version": "adfatigue-nlp-v2.0",
+  "preprocessing_version": "variant-a-v2.0",
+  "real_world_frozen_test_metrics": {
+    "test_set_size": 299,
+    "accuracy": 0.6555,
+    "macro_precision": 0.6531,
+    "macro_recall": 0.6131,
+    "macro_f1": 0.6200,
+    "weighted_precision": 0.6519,
+    "weighted_recall": 0.6555,
+    "weighted_f1": 0.6472,
+    "calibration_ece": 0.0626,
+    "brier_score": 0.4798
+  },
+  "baseline_vs_final_deltas": {
+    "phase2_baseline_accuracy": 0.2809,
+    "phase3_final_accuracy": 0.6555,
+    "accuracy_gain": 0.3746,
+    "phase2_baseline_macro_f1": 0.2711,
+    "phase3_final_macro_f1": 0.6200,
+    "macro_f1_gain": 0.3489
+  },
+  "stress_and_subpopulation_metrics": {
+    "ood_50_accuracy": 0.4200,
+    "ood_50_macro_f1": 0.1696,
+    "multilingual_16_accuracy": 0.1875,
+    "multilingual_16_macro_f1": 0.1167,
+    "stress_64_accuracy": 0.6094,
+    "stress_64_macro_f1": 0.6296
+  },
+  "calibration_and_threshold": {
+    "temperature": 1.0494,
+    "critical_complaint_threshold": 0.50,
+    "threshold_precision": 0.7941,
+    "threshold_recall": 0.4576,
+    "threshold_f1": 0.5806
+  },
+  "production_serving_metrics": {
+    "device": "cuda (NVIDIA GeForce GTX 1650)",
+    "vram_allocated_mb": 961.59,
+    "single_item_p50_ms": 53.82,
+    "single_item_p95_ms": 61.36,
+    "single_item_p99_ms": 69.43,
+    "single_item_throughput_items_sec": 18.3,
+    "load_test_peak_rps": 197.3,
+    "load_test_error_rate_pct": 0.0
+  },
+  "regression_tests": {
+    "total_tests": 59,
+    "passed": 59,
+    "failed": 0,
+    "errors": 0,
+    "duration_sec": 42.50
+  }
+}

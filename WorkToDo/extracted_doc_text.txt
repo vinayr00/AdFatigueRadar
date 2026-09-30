@@ -1,0 +1,352 @@
+AdFatigueRadar — Final Master Engineering Specification
+CODEBEGUN HACKZEN 2026 | Topic #15 | Pre-coding freeze
+Status: FINAL MASTER SPECIFICATION. This document is the single source of truth for implementation. Earlier drafts, locks, appendices and conflicting threshold definitions are superseded by this document.
+1. Product Goal
+AdFatigueRadar is a sandboxed real-time observer and budget-protection guard for paid social campaigns. It combines comment-level audience feedback with delivery/economic telemetry to detect audience fatigue early, explain the signal, and protect simulated spend before material economic degradation.
+Core loop: DETECT → EXPLAIN → PREDICT/early-warning → ALERT → PROTECT.
+P0 does not depend on a machine-learning predictor. Unless the optional predictor ships, the product language is 'early warning', not 'predicts'.
+The demo is a simulation. It must report measured results from held-out replay seeds rather than claim universal 24-hour predictive performance.
+No real advertising spend or live campaign mutation is used in the hackathon demo.
+2. Hard Scope Cut Line
+P0 — Must Work
+Frozen JSONL event schemas and a crude stub replay in the first two hours.
+Three-day replay with deterministic/injectable simulated clock.
+Two-stage NLP: general sentiment + custom 8-class feedback taxonomy.
+Leakage-safe train/test/replay separation.
+Harmful weighted-share, Wilson bound, sentiment decay, fatigue/mockery, comment acceleration, CTR/frequency, critical complaint, distinct-author and economic features.
+Two-score risk engine: audience_risk and economic_risk.
+WARNING, SOFT_REDUCED and PAUSE guard logic.
+ACTIVE / SOFT_REDUCED / PAUSED / BLOCKED state machine with hysteresis, persistence, cooldown and alert throttling.
+Sandbox pause + read-back + audit log.
+Main sentiment/performance timeline.
+CPM-only and banter-storm negative controls.
+Action-responsive replay simulation and economic tradeoff metrics.
+API-key protection, safe threshold bounds, XSS-safe comment rendering, HMAC author IDs.
+Sub-minute NLP latency check.
+P1 — Only After P0 Is Stable
+ROAS chart and lag diagnostics.
+Threshold configuration UI and endpoint.
+Slack Incoming Webhook or local mock receiver.
+Raw CPA, smoothed CPA/CPM and sentiment-only baselines.
+Multi-seed lag analysis and lead-time distribution.
+Protected-vs-no-action economic comparison UI.
+P2 — Optional
+Logistic-regression predictor using separate replay seeds.
+Advanced brigading/manipulation detection.
+Extended throughput/p95 optimization and model quantization.
+Advanced operator controls beyond P0 safety behavior.
+Docker/model-volume polish.
+3. Architecture
+Layer
+Implementation
+Owner
+Replay + simulator
+Python generator → potential-world JSONL → runtime ActionSimulation
+Person 3 + Person 2
+NLP
+HuggingFace Transformers, calibrated confidence, cached replay inference
+Person 1
+Features/Risk
+Python feature engine, Wilson/EWMA, two-score risk and guards
+Person 2
+API
+FastAPI + Pydantic + SQLite
+Person 2
+Frontend
+React + Vite + TypeScript + Tailwind + chart library
+Person 3
+Actions
+Sandbox pause/unpause/state read-back/audit
+Person 2
+Integration
+Frozen contracts, dashboard integration, replay controls
+Person 3
+Recommended stack: Python, FastAPI, Pydantic, SQLite, asyncio, SQLAlchemy/SQLModel, httpx, pytest; React/Vite/TypeScript/Tailwind; HuggingFace Transformers/PyTorch. Kafka/Kubernetes and other infrastructure are out of scope.
+4. Team Ownership and First-Hours Plan
+Owner
+P0 responsibility
+P1/P2
+Person 1 — AI/NLP
+Model benchmark, preprocessing, labeling guide, LLM-assisted pre-labeling, human audit, custom taxonomy, confidence calibration, inference, replay comment category mixes.
+Sentiment-only baseline; optional predictor.
+Person 2 — Backend/Risk
+FastAPI, SQLite, feature engine, two-score risk, state machine, action gates, ActionSimulation interface, audit, security, thresholds.
+Threshold endpoint/UI contract, webhook, ablations, lag analysis.
+Person 3 — Replay/Frontend/Integration
+Canonical JSONL schema, stub replay within 2 hours, scenario generator, potential curves, dashboard, replay controls, integration.
+ROAS/baseline/lag visualizations, polish.
+Person 3 commits the crude stub replay first so Person 2 can work immediately.
+Person 1 supplies replay comment mixes only after ensuring they are newly authored and disjoint from training/test data.
+Person 2 owns the shared ActionSimulation interface; Person 3 owns potential-world scenario generation. There is one economic simulation interface, not two competing models.
+No P2 work starts while a P0 acceptance test is failing.
+5. Frozen Event Contracts
+5.1 CommentEvent
+{  "event_id": "comment_0001",  "timestamp": "2026-09-30T12:00:00Z",  "campaign_id": "campaign_01",  "ad_id": "ad_07",  "author_id": "author_184",  "text": "Bro this ad again 😂",  "reactions": 12,  "replies": 3}
+5.2 TelemetryEvent
+{  "event_id": "telemetry_0001",  "timestamp": "2026-09-30T12:00:00Z",  "campaign_id": "campaign_01",  "ad_id": "ad_07",  "spend": 4500,  "impressions": 52000,  "reach": 36000,  "clicks": 4200,  "conversions": 190,  "cpm": 86.54,  "cpc": 1.07,  "cpa": 23.68,  "roas": 3.8}
+5.3 NLP Output
+{  "comment_id": "comment_0001",  "sentiment": "negative",  "sentiment_score": 0.91,  "category": "fatigue",  "confidence": 0.94,  "critical_complaint": false}
+5.4 Action / Read-back
+{  "action": "PAUSE",  "mode": "SANDBOX",  "executed": true,  "confidence": 0.92,  "reason": "Sustained harmful fatigue signals with economic confirmation",  "previous_state": "SOFT_REDUCED",  "new_state": "PAUSED",  "readback_verified": true,  "audit_event_id": "audit_00041"}
+5.5 Audit Event
+{  "audit_id": "audit_00041",  "timestamp_simulated": "2026-09-30T14:30:00Z",  "campaign_id": "campaign_01",  "actor_type": "SYSTEM",  "action": "PAUSE",  "previous_state": "SOFT_REDUCED",  "new_state": "PAUSED",  "reason_codes": ["AUDIENCE_RISK_HIGH","ECONOMIC_CONFIRMATION"],  "risk": {"audience_risk": 0.89, "economic_risk": 0.78},  "readback_verified": true,  "config_version": "thresholds_v4"}
+6. Replay Architecture
+The replay is not a pre-baked outcome file. The generator emits an unconstrained potential world; the runtime simulator applies campaign actions.
+6.1 Potential-world JSONL
+Each 5-minute step contains potential impressions/volume, CPM, CTR, conversion rate, comment intensity/category mix and optional reach/frequency. These are the scripted conditions that would exist without protection.
+6.2 Runtime ActionSimulation
+ACTIVE: full potential volume.
+SOFT_REDUCED: potential volume × actions.soft_budget_multiplier (default 0.80).
+PAUSED: zero new spend/volume after effective pause time.
+While PAUSED, emit zero-volume telemetry heartbeats every 5 simulated minutes.
+CPA is null when there are zero conversions; never represent it as infinity.
+Features/economic ratios are calculated from sums over the rolling hour, not averages of noisy per-step ratios.
+Below 20 conversions in the rolling hour, economic risk is N/A and cannot confirm a Path A pause.
+Assumption: the replay's underlying economics are scripted and actions only scale volume. Therefore protection mechanically reduces exposure. The meaningful outputs are excess cost avoided per conversion forgone, action timing, and false-positive behavior.
+7. Time Semantics
+Compute step: 5 simulated minutes.
+Guard window: rolling 60 simulated minutes.
+Telemetry emits every 5 simulated minutes.
+Default comment rate: about 2/minute; stress rate: 8/minute; night lull: 0.4/minute.
+Persistence is expressed in simulated hours.
+Wall-clock latency is measured separately.
+All business logic uses an injectable clock; tests never depend on machine time.
+8. Harmful Feedback Definition
+The single harmful-negative definition used by the combined system is weighted harmful share. Raw stage-1 negative sentiment is NOT the combined harmful ratio.
+Category
+Harmful weight
+Meaning
+product_complaint
+1.00
+Product-specific complaint
+service_complaint
+1.00
+Service/support complaint
+fatigue
+0.80
+Repeated exposure to the advertisement
+mockery
+0.75
+Ad-directed ridicule
+spam
+0.60
+Spam/low-quality harmful engagement
+banter_meme
+0.00
+Excluded from harmful ratio
+neutral
+0.00
+No harmful signal
+positive
+0.00
+Positive feedback
+Weighted harmful count is fractional. The Wilson lower bound is applied to the fractional harmful count and total classified comments. Banter cannot inflate harmful ratio or category-weighted sentiment decay.
+9. 'Again' Labeling Rule
+FATIGUE only when the language indicates repeated exposure to the advertisement itself.
+'Bro this ad again 😂' → FATIGUE.
+'Bought again, love it' → not FATIGUE.
+'Ordered again, thank you!' → not FATIGUE.
+The labeling guide must include both positive and negative 'again' examples.
+10. Two-Score Risk Engine
+10.1 Audience Risk
+audience_risk =  0.30 × harmful_negative_ratio_signal+ 0.25 × sentiment_decay_signal+ 0.20 × fatigue_mockery_signal+ 0.10 × comment_acceleration_signal+ 0.10 × ctr_frequency_signal+ 0.05 × critical_complaint_signal
+10.2 Economic Risk
+economic_risk =  0.55 × cpa_cpm_signal+ 0.45 × roas_conversion_signal
+10.3 Normalization
+Every raw component is normalized as clip((x-low)/(high-low), 0, 1) using thresholds_v4. No business-logic code hard-codes the numeric bounds.
+ctr_frequency_signal = mean(normalized CTR decay, normalized frequency increase).
+cpa_cpm_signal = max(normalized CPA delta, normalized CPM delta).
+roas_conversion_signal = max(normalized ROAS drop, normalized conversion-rate drop).
+10.4 Worked Example
+The authoritative worked example is generated by check_config.py from thresholds_v4, not manually typed. Its expected headline values are approximately audience_risk=0.781 and economic_risk=0.178. The implementation must reproduce the script's arithmetic.
+Example raw inputs:n=120, k_eff=56, decay_per_hr=0.14, fatigue_share=0.30,accel_per_hr=0.08, ctr_decay_pct=25, freq_inc_pct=55,critical_rate=0.04Economic raw inputs:cpa_delta_pct=12, cpm_delta_pct=8, roas_drop_pct=9.5,conv_drop_pct=6
+11. Gates, Severity and State
+Severity and campaign state are separate axes.
+Axis
+Values
+Purpose
+Severity
+HEALTHY / WATCH / WARNING / CRITICAL
+Current risk/alert level.
+Campaign state
+ACTIVE / SOFT_REDUCED / PAUSED / BLOCKED
+Actual protection mode.
+WATCH at audience_risk >= 0.50.
+WARNING at audience_risk >= 0.65 for 0.5 simulated hours. Warning is an alert; it does not change state.
+SOFT_REDUCED at audience_risk >= 0.75 for 1.0 simulated hour.
+PAUSE Path A requires audience_risk >= 0.85 AND economic_risk >= 0.70 AND evidence/confidence/persistence/cooldown gates.
+CRITICAL severity at audience_risk >= 0.85 or a valid Path B emergency condition.
+Path B is the critical-complaint emergency path.
+Soft recovery occurs at audience_risk <= 0.60 for the recovery period.
+Warning alert recovery/hysteresis threshold is 0.45.
+12. Confidence and Evidence
+Per-comment confidence is calibrated confidence after temperature scaling or equivalent calibration.
+Window confidence is the mean calibrated confidence across classified comments in the rolling 60-minute window.
+Path A uses window mean confidence >= 0.85.
+Path B uses mean confidence of critical-complaint comments >= 0.85.
+Minimum classified comments = 30.
+Minimum distinct authors = 10.
+Below the minimum evidence, automated high-severity action fails closed.
+13. Path A / Path B Pause Rules
+Path A — Economic Confirmation
+audience_risk >= 0.85.
+economic_risk >= 0.70.
+At least 20 conversions in the rolling hour.
+Harmful Wilson lower bound >= 0.35.
+Path A confidence gate satisfied.
+Pause persistence = 0.5 simulated hours.
+Cooldown clear.
+Path B — Critical Complaint Emergency
+Critical complaint categories are product_complaint/service_complaint.
+Critical complaint confidence >= 0.85.
+Critical complaint rate >= 0.20.
+At least 10 distinct authors.
+Emergency persistence = 0.25 simulated hours.
+Minimal anomaly flag is false.
+Cooldown clear.
+A keyword alone can never create a critical complaint.
+14. P0 Anomaly Flag
+Path B requires anomaly_flag=false. P0 uses deterministic checks:
+top_author_share > 0.30 → anomaly=true.
+duplicate_cluster_share > 0.40 → anomaly=true.
+Per-author comments are capped at 3 per rolling window before aggregation.
+Either anomaly condition blocks Path B.
+15. State Machine and Staleness
+ACTIVE → SOFT_REDUCED after sustained soft audience risk.
+SOFT_REDUCED → ACTIVE only after audience_risk <= 0.60 for recovery persistence.
+SOFT_REDUCED → PAUSED through Path A or Path B.
+PAUSED → ACTIVE only through explicit unpause; unpause starts a fresh cooldown.
+BLOCKED is an operational safety state.
+Stale-data checks run only in ACTIVE and SOFT_REDUCED.
+Telemetry staleness = no valid telemetry for more than 2 expected 5-minute emissions.
+PAUSED campaigns emit zero-volume heartbeats, so a paused campaign does not become stale/BLOCKED.
+Fresh telemetry automatically recovers stale-data protection; explicit operator recovery is reserved for explicit/manual blocks or unsafe configuration.
+Alert throttling prevents repeated identical alerts while state and reason remain unchanged.
+16. Canonical thresholds.yaml — thresholds_v4
+config_version: thresholds_v4compute:  step_minutes: 5  guard_window_minutes: 60  ewma_alpha: 0.30audience_gates:  watch: 0.50  warning: 0.65  soft: 0.75  critical: 0.85  pause_audience: 0.85  warning_recovery: 0.45  soft_recovery: 0.60economic:  pause_gate: 0.70  min_conversions_in_window: 20  baseline_a_cpa_multiplier: 1.25persistence_hours:  warning: 0.5  soft: 1.0  pause: 0.5  emergency: 0.25  recovery: 1.0cooldown_minutes: 60evidence:  min_classified_comments: 30  min_distinct_authors: 10  min_classifier_confidence: 0.85  harmful_wilson_lb_min: 0.35  wilson_z: 1.96audience_weights:  harmful_negative_ratio: 0.30  sentiment_decay: 0.25  fatigue_mockery: 0.20  comment_acceleration: 0.10  ctr_frequency: 0.10  critical_complaint: 0.05economic_weights:  cpa_cpm: 0.55  roas_conversion: 0.45normalization:  harmful_negative_ratio: {low: 0.10, high: 0.45}  sentiment_decay: {low: 0.02, high: 0.15}  fatigue_mockery: {low: 0.05, high: 0.35}  comment_acceleration: {low: 0.01, high: 0.10}  ctr_decay_pct: {low: 5, high: 40}  frequency_increase_pct: {low: 10, high: 80}  critical_complaint: {low: 0.02, high: 0.20}  cpa_delta_pct: {low: 5, high: 40}  cpm_delta_pct: {low: 5, high: 35}  roas_drop_pct: {low: 5, high: 35}  conv_rate_drop_pct: {low: 5, high: 35}category_weights:  product_complaint: 1.00  service_complaint: 1.00  fatigue: 0.80  mockery: 0.75  spam: 0.60  banter_meme: 0.00  neutral: 0.00  positive: 0.00critical_complaint:  categories: [product_complaint, service_complaint]  min_confidence: 0.85  rate_min: 0.20anomaly:  top_author_share_max: 0.30  duplicate_cluster_share_max: 0.40  per_author_max_comments_per_window: 3actions:  soft_budget_multiplier: 0.80staleness:  stale_after_steps: 2  check_states: [ACTIVE, SOFT_REDUCED]  paused_heartbeat: true
+17. Server-Side Safe Bounds
+audience_gates.warning:             0.40..0.90audience_gates.soft:                0.50..0.95audience_gates.pause_audience:      0.75..0.99economic.pause_gate:                0.50..0.95economic.min_conversions_in_window: 10..500evidence.min_classified_comments:   20..1000evidence.min_distinct_authors:       5..200evidence.min_classifier_confidence: 0.70..0.99evidence.harmful_wilson_lb_min:     0.25..0.80cooldown_minutes:                    15..1440actions.soft_budget_multiplier:      0.30..0.95
+The dashboard cannot weaken these bounds. PUT /campaigns/{id}/thresholds is rejected server-side when any value is outside them.
+18. Replay Scenario Configuration
+{  "scenario_id": "fatigue_to_pause_v4",  "duration_simulated_hours": 72,  "compute_step_minutes": 5,  "guard_window_minutes": 60,  "comment_rate_per_minute": 2.0,  "lull_rate_per_minute": 0.4,  "stress_rate_per_minute": 8.0,  "phases": [    {"name":"healthy","start_hour":0,"end_hour":18},    {"name":"early_fatigue","start_hour":18,"end_hour":36},    {"name":"acceleration","start_hour":36,"end_hour":52},    {"name":"economic_degradation","start_hour":52,"end_hour":72}  ]}
+Per-step starting values must remain plausible: CPM around 9.00, CTR around 1.4%, and roughly 47 conversions per rolling hour in the healthy baseline. These are tuning inputs, not measured real-world claims.
+19. Replay Integrity and Seed Discipline
+Replay comments are disjoint from training, validation, LLM-prelabeling and held-out human-test data.
+Use varied phrasings per category, not repeated templates.
+The ~300 human-audited comments remain the held-out test set.
+Report LLM-prelabel vs human-audit agreement.
+Tune thresholds, weights and scenario parameters only on tuning seeds.
+Freeze all parameters before opening reporting seeds.
+Reporting seeds are separate and are never used for post-hoc tuning.
+Predictor, if built, also trains and tests on different seeds.
+20. 24-Hour Target Calibration
+Canonical economic degradation begins at hour 52. A 24-hour lead therefore requires a valid warning by hour 28 or earlier.
+The tuning suite must explicitly test the hour-28 gate.
+With about 120 comments/hour, the audience components must be sufficiently elevated for audience_risk to cross WARNING by hour 28.
+The early-fatigue ramp therefore must be clear enough to cross the configured bounds; it must not be presented as subtle if it is not.
+If plausible tuning seeds cannot produce a valid warning by hour 28, adjust normalization bounds or scenario timing on tuning seeds before reporting.
+Do not claim the 24-hour target until the held-out reporting seeds demonstrate the measured lead-time distribution.
+21. Economic Evaluation
+Raw spend reduction is not a savings claim. The system reports efficiency-adjusted excess cost.
+excess_cost = spend * max(0, 1 - baseline_CPA / current_CPA)excess_cost_avoided = no_action_excess_cost - protected_excess_costconversions_forgone = max(0, no_action_conversions - protected_conversions)tradeoff = excess_cost_avoided / max(1, conversions_forgone)
+Protected and no-action runs use identical potential-world curves and seed.
+Report action time, spend, conversions, excess cost, excess cost avoided and conversions forgone.
+Do not call the simulated result real monetary savings.
+22. Predictor / Early-Warning Evidence
+P2 logistic regression is optional. P0/P1 may use the normalized acceleration signal as a heuristic evidence field, but it is not called predictive ML.
+If P2 ships: use 5-minute observations, multiple seeds, different train/test seeds, differenced series for correlation, and report AUC/precision-recall plus lead-time distribution.
+Do not tune and report on the same generated seed.
+If P2 does not ship, use 'early warning' terminology throughout the demo and presentation.
+23. Baselines and Negative Controls
+Baseline A: raw CPA threshold using baseline_a_cpa_multiplier.
+Baseline B: smoothed CPA/CPM threshold.
+Baseline C: sentiment-only threshold using raw stage-1 negative sentiment.
+CPM surge without sentiment change must not pause.
+Banter storm with stable economics must not pause.
+Banter is excluded from the combined harmful ratio and category-weighted sentiment decay.
+The sentiment-only baseline may fire during banter; this is an explicit demonstration of why the combined guard exists.
+24. Security and Reliability
+Mutating endpoints require an API-key header.
+Thresholds are validated server-side against safe bounds.
+Threshold changes are audit events with old/new values and config version.
+Comment text is safely escaped in React; never inject raw HTML.
+Author IDs use HMAC with an environment-provided secret.
+Provider/Slack secrets live only in environment variables.
+Pause is idempotent.
+Pause read-back verifies PAUSED state.
+Unpause resets cooldown and requires fresh persistence before re-pause.
+Uncertainty, missing evidence and failed read-back fail closed.
+25. NLP Replay Performance
+Cache replay NLP outputs keyed by comment_id + model_version + preprocessing_version.
+Cached replay outputs are allowed for demo speed after validation.
+Live inference benchmark bypasses the cache.
+Measure sub-minute classification latency early.
+If CPU latency is too high, batch or quantize/use a smaller model before dashboard polish.
+Pre-cache model weights in a local volume/artifact so first run does not depend on internet.
+26. Endpoints
+GET /campaigns/{campaign_id}/status
+GET /campaigns/{campaign_id}/timeline
+GET /campaigns/{campaign_id}/stream
+GET /campaigns/{campaign_id}/audit
+POST /campaigns/{campaign_id}/replay/start?speed={speed}
+POST /campaigns/{campaign_id}/replay/reset
+POST /campaigns/{campaign_id}/pause
+POST /campaigns/{campaign_id}/unpause
+POST /campaigns/{campaign_id}/override
+PUT /campaigns/{campaign_id}/thresholds
+POST /webhooks/slack/test
+Override is P2 unless needed to implement an explicit BLOCKED operator state. All mutating endpoints are protected by API key.
+27. Dashboard — P0/P1 Only
+Campaign/ad state and severity.
+Audience risk and economic risk.
+Harmful ratio/Wilson lower bound.
+Sentiment decay and fatigue/mockery share.
+CPA/CPM/ROAS and conversion context.
+Main timeline.
+Action/state history and audit events.
+Replay start/reset/speed.
+P1: thresholds, ROAS view, baselines, lag diagnostics, webhook status.
+No decorative charts. Every visualization must answer whether the audience is fatigued, whether economics are degrading, or why the guard acted.
+28. Demo Sequence
+1. Start healthy campaign.
+2. Show stable audience/economic signals.
+3. Replay early fatigue.
+4. WARNING before economic degradation.
+5. Continue acceleration.
+6. SOFT_REDUCED action changes runtime volume.
+7. Economic confirmation develops.
+8. PAUSE Path A or Path B activates only when guardrails pass.
+9. Pause read-back and audit event appear.
+10. Compare protected vs no-action excess cost/conversions.
+11. Run CPM-only negative control.
+12. Run banter-storm negative control.
+13. Show sentiment-only baseline behavior.
+14. Show measured lead-time distribution on held-out reporting seeds.
+29. Acceptance Tests
+Config checker passes: weight sums, ordered gates, recovery thresholds, banter weight 0 and safe bounds.
+Two-score arithmetic matches check_config.py.
+Wilson threshold calibration is printed for n=24, 30, 60, 120 and 480.
+Low-volume lull exercises the minimum-evidence guard.
+Audience WARNING/SOFT can trigger without economic degradation.
+Path A cannot pause when economic risk is N/A.
+Path B cannot pause when anomaly_flag=true.
+Paused campaign emits zero-volume heartbeat and never becomes stale.
+CPA is null, not infinity, when conversions are zero.
+CPM-only scenario does not pause.
+Banter storm does not pause under the combined guard.
+Raw sentiment-only baseline may fire on banter.
+Protected replay changes volume through the shared simulator.
+No-action and protected runs share the same potential-world curve.
+API-key rejection test passes.
+Threshold-bounds rejection test passes.
+XSS escaping test passes.
+HMAC author IDs are used.
+Pause read-back succeeds.
+Threshold changes are audited.
+Sub-minute live NLP latency is measured.
+Replay output cache works.
+Reporting seeds are held out from tuning.
+30. Required Files / Repository Structure
+adfatigueradar/├── backend/│   ├── api/│   ├── risk/│   ├── actions/│   ├── replay/│   ├── nlp/│   ├── models/│   ├── tests/│   └── main.py├── frontend/│   └── src/├── replay/│   ├── scenarios/│   ├── generated/│   └── schemas/├── config/│   └── thresholds.yaml├── scripts/│   ├── check_config.py│   └── seed_demo.py├── data/│   ├── training/│   ├── test_human_audited/│   └── replay/├── .env.example├── README.md└── docker-compose.yml  # optional/P2
+31. Final Freeze Rule
+This document is the sole implementation specification. Do not maintain a separate lock, patch or competing thresholds file. The supplied thresholds_v4 configuration and check_config.py are the authoritative starting configuration and sanity test. All numeric values are starting values: tune only on tuning seeds, freeze, then open reporting seeds. Any later change must update this master specification, thresholds.yaml and the corresponding tests together.

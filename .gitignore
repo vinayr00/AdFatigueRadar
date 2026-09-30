@@ -30,7 +30,6 @@ env/
 ENV/
 env.bak/
 venv.bak/
-ENV/
 *.virtualenv/
 
 # Distribution / Packaging / Builds
@@ -81,7 +80,13 @@ ehthumbs.db
 Thumbs.db
 desktop.ini
 
-# Database & Cache Artifacts
+# Database, Model Cache & Large Artifacts
 *.sqlite
 *.sqlite3
 *.db
+*.joblib
+data/models/
+data/banking77/
+data/tweeteval/
+.ipynb_checkpoints/
+worktodo/

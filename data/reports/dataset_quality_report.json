@@ -1,0 +1,44 @@
+{
+  "report_version": "real-world-v1.0",
+  "timestamp": "2026-09-30T13:55:48.513271+00:00",
+  "summary": {
+    "raw_records_ingested": 3060,
+    "records_after_dedup": 644,
+    "records_removed_in_cleaning": 2416,
+    "pii_detections": 1445,
+    "double_annotated_count": 644,
+    "inter_annotator_raw_agreement": 0.9705,
+    "inter_annotator_cohens_kappa": 0.9661,
+    "kappa_interpretation": "Almost Perfect Agreement",
+    "disagreements_adjudicated": 19
+  },
+  "split_sizes": {
+    "real_world_train": 286,
+    "real_world_val": 71,
+    "real_world_test": 121,
+    "real_world_ood": 150,
+    "multilingual_test": 16
+  },
+  "text_length_statistics": {
+    "min_chars": 18,
+    "max_chars": 116,
+    "mean_chars": 75.27,
+    "p50_chars": 76,
+    "p95_chars": 102
+  },
+  "overall_class_distribution": {
+    "fatigue": 64,
+    "product_complaint": 97,
+    "service_complaint": 65,
+    "mockery": 64,
+    "spam": 93,
+    "banter_meme": 67,
+    "neutral": 97,
+    "positive": 97
+  },
+  "overall_language_distribution": {
+    "en": 628,
+    "hinglish": 8,
+    "telugu_latin": 8
+  }
+}

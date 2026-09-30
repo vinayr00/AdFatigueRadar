@@ -1,0 +1,40 @@
+{
+  "dataset_name": "AdFatigueRadar Training & Validation Corpus",
+  "version": "v2.0",
+  "provenance": {
+    "method": "synthetic",
+    "description": "Engineered multi-domain ad comment corpus covering 8 categories with regional slang, Hinglish, Telugu transliterations, and typos."
+  },
+  "splits": {
+    "train": {
+      "total": 640,
+      "per_category": {
+        "product_complaint": 80,
+        "service_complaint": 80,
+        "fatigue": 80,
+        "mockery": 80,
+        "spam": 80,
+        "banter_meme": 80,
+        "neutral": 80,
+        "positive": 80
+      }
+    },
+    "val": {
+      "total": 160,
+      "per_category": {
+        "product_complaint": 20,
+        "service_complaint": 20,
+        "fatigue": 20,
+        "mockery": 20,
+        "spam": 20,
+        "banter_meme": 20,
+        "neutral": 20,
+        "positive": 20
+      }
+    }
+  },
+  "disjoint_from_test": true,
+  "leakage_guarantee": "0 exact and 0 near-duplicate matches (token Jaccard >= 0.85) across train/val/test/stress",
+  "exact_duplicates_across_splits": 0,
+  "near_duplicates_across_splits": 0
+}
