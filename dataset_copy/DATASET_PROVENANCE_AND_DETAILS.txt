@@ -1,0 +1,84 @@
+===============================================================================
+AdFatigueRadar — Complete Dataset Provenance, Origin & Placement Guide
+===============================================================================
+
+This folder contains clean copies of all datasets used in the AdFatigueRadar 
+sentiment analysis, ad-fatigue detection, and risk scoring pipeline.
+
+-------------------------------------------------------------------------------
+1. RAW SOCIAL MEDIA SOURCE DATASETS (CSVs)
+-------------------------------------------------------------------------------
+
+1. raw_youtube_data.csv (27.2 MB)
+   • Source / Origin: YouTube Data API v3 & public video ad comment streams.
+   • Content: Viewer comments, reactions, and engagement on commercial video ads.
+   • Original Location in Project: realdata/youtube_data.csv and data/real_world/raw/youtube_data.csv
+   • Usage: Ingestion source for ad fatigue, sarcasm, and product complaint extraction.
+
+2. raw_reddit_data.csv (5.8 MB)
+   • Source / Origin: Reddit API / pushshift scraping of sponsored posts, brand discussion threads, and ad complaints.
+   • Content: Long-form user feedback, ad fatigue discussions, and service complaints.
+   • Original Location in Project: realdata/reddit_data.csv and data/real_world/raw/reddit_data.csv
+   • Usage: Ingestion source for long-text customer feedback and brand mockery.
+
+3. raw_tweets.csv (102.5 KB)
+   • Source / Origin: Twitter / X API v2 stream of brand campaign mentions and promotional replies.
+   • Content: Short-form tweets, emojis, hashtags, and quick consumer reactions.
+   • Original Location in Project: realdata/tweets.csv and data/real_world/raw/tweets.csv
+   • Usage: Ingestion source for fast emoji reactions, memes, and repeat ad complaints.
+
+-------------------------------------------------------------------------------
+2. PROCESSED & LABELED REAL-WORLD DATASET SPLITS (JSONL)
+-------------------------------------------------------------------------------
+
+4. real_world_train.jsonl (874 records, 439.8 KB)
+   • Source / Origin: Curated from the 1,461-sample real-world pool after PII sanitization and deduplication.
+   • Content: 8-class taxonomy labeled training samples with comment text and sentiment hints.
+   • Original Location in Project: data/real_world/train/train.jsonl
+   • Usage: Used to fit the Stage 2 Logistic Regression classifier head on top of RoBERTa 768-dim embeddings.
+
+5. real_world_validation.jsonl (288 records, 135.8 KB)
+   • Source / Origin: Disjoint validation split from the real-world annotated pool.
+   • Content: Unseen labeled samples.
+   • Original Location in Project: data/real_world/validation/validation.jsonl
+   • Usage: Used for Temperature Scaling calibration (fitted T=1.0494) and operational threshold tuning (tau=0.50).
+
+6. real_world_test_frozen.jsonl (299 records, 143.9 KB)
+   • Source / Origin: Cryptographically frozen held-out real-world test set (SHA-256: 82dacabc48ba6d5ae57df9b647d6928e1d743a6d45f4f46a297920786cfba7e9).
+   • Content: 299 diverse real comments across all 8 taxonomy categories.
+   • Original Location in Project: data/real_world/test/test.jsonl
+   • Usage: Final Phase 3 & Phase 4 test set. Achieved 65.55% Accuracy, 0.6200 Macro-F1, 0.0626 ECE.
+
+7. real_world_ood.jsonl (50 records, 26.4 KB)
+   • Source / Origin: Non-advertising general conversational Reddit/YouTube comment threads.
+   • Content: Out-of-distribution comments without advertising context.
+   • Original Location in Project: data/real_world/ood/ood.jsonl
+   • Usage: Stress testing model generalization under domain shift (Accuracy: 42.00%).
+
+8. multilingual_test.jsonl (16 records, 7.0 KB)
+   • Source / Origin: Real-world non-English comments (Spanish, German, Hindi, French).
+   • Content: Multilingual ad feedback samples.
+   • Original Location in Project: data/splits/multilingual_test.jsonl
+   • Usage: Diagnostic test revealing English-only RoBERTa architectural boundary (Accuracy: 18.75%).
+
+9. adjudicated_ground_truth_pool.jsonl (1,461 records, 719.5 KB)
+   • Source / Origin: Master annotated pool produced by dual-annotator pipeline with Cohen's kappa arbitration (kappa = 0.6923).
+   • Content: All 1,461 adjudicated comments with Annotator A/B outputs.
+   • Original Location in Project: data/real_world/annotation/adjudicated_human_labels.jsonl
+
+-------------------------------------------------------------------------------
+3. SYNTHETIC & ADVERSARIAL BENCHMARK SETS (JSONL)
+-------------------------------------------------------------------------------
+
+10. synthetic_test_baseline.jsonl (320 records, 60.1 KB)
+    • Source / Origin: Authored synthetic dataset (40 samples per class).
+    • Content: Balanced synthetic ad comments.
+    • Original Location in Project: data/test_human_audited/labels.jsonl
+    • Usage: Phase 0 synthetic baseline test set (Accuracy: 95.00%).
+
+11. synthetic_stress_set.jsonl (64 records, 6.4 KB)
+    • Source / Origin: Adversarial edge cases, sarcasm, and tricky repeat-purchase phrases ("bought again" vs "ad again").
+    • Content: 64 stress test comments (8 per class).
+    • Original Location in Project: data/test_human_audited/stress_set.jsonl
+    • Usage: False-positive and adversarial robustness evaluation (Accuracy: 60.94%).
+===============================================================================
