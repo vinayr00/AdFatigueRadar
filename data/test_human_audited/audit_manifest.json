@@ -1,8 +1,13 @@
 {
-  "dataset_name": "AdFatigueRadar Human-Audited Held-Out Test Corpus",
+  "dataset_name": "AdFatigueRadar Held-Out Evaluation Corpus",
+  "version": "v2.0",
+  "provenance": {
+    "method": "synthetic",
+    "description": "Synthetically authored, strictly held-out test evaluation corpus. No fake human annotator consensus claimed.",
+    "human_audit_sample_file": "sample_audit_50.jsonl"
+  },
   "total_samples": 320,
-  "version": "v1.0",
-  "categories": {
+  "per_category": {
     "product_complaint": 40,
     "service_complaint": 40,
     "fatigue": 40,
@@ -12,9 +17,10 @@
     "neutral": 40,
     "positive": 40
   },
-  "annotator_consensus_rate": 0.985,
-  "preprocessing_version": "preproc-v1.0",
   "is_held_out": true,
-  "disjoint_from_training": true,
-  "disjoint_from_replay": true
+  "disjoint_from_train": true,
+  "disjoint_from_val": true,
+  "leakage_guarantee": "0 exact and 0 near-duplicate matches (token Jaccard >= 0.85) across train/val/test/stress",
+  "exact_duplicates_across_splits": 0,
+  "near_duplicates_across_splits": 0
 }

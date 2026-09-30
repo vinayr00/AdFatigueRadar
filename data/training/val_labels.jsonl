@@ -1,0 +1,160 @@
+{"text": "The elastic tension cord snapped on the third afternoon of use.", "category": "product_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Rotary volume potentiometer spins indefinitely without altering sound output.", "category": "product_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Recessed charging contacts fail to touch the charging cradle pins.", "category": "product_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Plastic belt clip fractured under the weight of an empty pouch.", "category": "product_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Windshield suction cup loses vacuum seal within forty seconds every attempt.", "category": "product_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Display backlight strobes between maximum brightness and pitch black.", "category": "product_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Inner thermal lining came unstitched during the initial trial run.", "category": "product_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Optical mouse sensor randomly jumps toward the corner of the monitor.", "category": "product_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Friction hinge has zero resistance and drops flat under light touch.", "category": "product_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Reinforced carry strap pulled out of its metal grommet anchor.", "category": "product_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Wall adapter emits an ear-piercing coil whine and becomes scalding hot.", "category": "product_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Polycarbonate shell cracked along the molding seam at room temperature.", "category": "product_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "USB-C receptacle collapsed inwards into the chassis upon plugging in.", "category": "product_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Nylon drive gears stripped their teeth under normal motor engagement.", "category": "product_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Hook and loop fastener lost all adhesion after being opened three times.", "category": "product_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Speaker diaphragm arrived torn, creating severe low-frequency distortion.", "category": "product_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Rubberized corner bumper detached and stretched out of shape.", "category": "product_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "PIR motion detector has a blind spot covering its entire front angle.", "category": "product_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bhai product receive hua par body puri tarah se cracked thi.", "category": "product_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Appudu apude main button virigipoindi, waste hardware quality.", "category": "product_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Carrier tracking code supplied by the seller does not exist in any database.", "category": "service_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Support promised a replacement unit two weeks ago, but nothing was ever dispatched.", "category": "service_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "An unlisted foreign transaction fee was added on top of the checkout total.", "category": "service_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Courier left the parcel sitting in the neighbor's open driveway in driving rain.", "category": "service_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Call center agent placed me on hold for twenty minutes and then terminated call.", "category": "service_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Processed refund was fifty dollars short of the purchase total without explanation.", "category": "service_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Support refuses to give tracking details for the alleged replacement shipment.", "category": "service_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Package was marked return to sender due to carrier fault, seller refuses reshipment.", "category": "service_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Billing continues to debit my bank card after receiving a formal cancellation confirmation.", "category": "service_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Customer service provided inaccurate information regarding return shipping liabilities.", "category": "service_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Parcel arrived with shipping label partially ripped off and interior contents missing.", "category": "service_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Seller completely ignores inquiry messages regarding thirty-day delayed shipment.", "category": "service_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Delivery courier refused to carry the parcel to the apartment door and aborted delivery.", "category": "service_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Customer service department refused to accept return of an incorrect model sent.", "category": "service_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Formal order cancellation submitted ten minutes after purchase was completely disregarded.", "category": "service_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Card was charged before order approval and then order was cancelled without prompt refund.", "category": "service_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Support helpdesk sends automated responses with dead hyperlinks to broken FAQ pages.", "category": "service_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Fulfillment center dispatched package to old profile address despite manual override.", "category": "service_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bhai customer care number pe koi phone nahi utha raha 10 din se.", "category": "service_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Support ticket raise chesi 12 days ayindi kani single reply kooda ivvaledu.", "category": "service_complaint", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Why is this ad on my timeline every single morning without fail?", "category": "fatigue", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bro please produce a new commercial, this one is completely exhausted.", "category": "fatigue", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "I have seen this sponsored clip twelve times in the last forty minutes.", "category": "fatigue", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "The frequency cap on this ad set is clearly set to infinite impressions.", "category": "fatigue", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Can this promotional post please stop following me to every social app?", "category": "fatigue", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "I am literally tired of seeing this exact same promotional post on repeat.", "category": "fatigue", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bro this ad again, who is configuring your media buying campaigns?", "category": "fatigue", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Every second post on my feed is this sponsored video advertisement.", "category": "fatigue", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "I know every word of this ad dialogue by heart now from repetition.", "category": "fatigue", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Please stop bombarding my account with this same marketing clip.", "category": "fatigue", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "The creative fatigue on this campaign is off the charts right now.", "category": "fatigue", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bro I have hidden this ad three times today already and it persists.", "category": "fatigue", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Why does this ad keep appearing after I selected 'not relevant'?", "category": "fatigue", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "This commercial is running on repeat twenty-four hours across my timeline.", "category": "fatigue", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Seeing this sponsored post more often than actual posts from people I follow.", "category": "fatigue", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Please rotate your creatives, this ad has been running for four months.", "category": "fatigue", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bro this ad again on my screen, give my newsfeed a break please.", "category": "fatigue", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Your marketing agency is over-saturating this audience demographic completely.", "category": "fatigue", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bhai ye ad feed se hat ta hi nahi hai, har time yahi dikhta hai.", "category": "fatigue", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Malli malli ide ad chupistunnaru feed lo, visigi poyamu deentho.", "category": "fatigue", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "The voice acting sounds like someone speaking through a soggy paper towel 💀", "category": "mockery", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bro is posing like a comic book superhero while demonstrating a broom 😭", "category": "mockery", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "The chroma key background is actively glitching around the actor's ears 🤡", "category": "mockery", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Look at the dramatic zoom on the presenter's completely bewildered eyes 💀", "category": "mockery", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bro genuinely believed this cheesy commercial script was high art 😭", "category": "mockery", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "The fake enthusiasm over a plastic microwave dish is comedy gold 💀", "category": "mockery", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Who edited this commercial? Windows Movie Maker on Windows XP? 🤡", "category": "mockery", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bro is aggressively nodding at the lens for seven seconds straight 😭", "category": "mockery", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "The dialogue delivery is so robotic that it hurts my cognitive senses 💀", "category": "mockery", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Look at the actor's pupils visibly reading the off-screen cue cards 🤡", "category": "mockery", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bro tried to project intense confidence and ended up looking terrified 😭", "category": "mockery", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "The slow-motion pancake toss was a complete uncoordinated disaster 💀", "category": "mockery", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "What in the infomercial cringe realm did I just stumble across 😭", "category": "mockery", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Marketing team really convinced themselves this was a viral masterpiece 🤡", "category": "mockery", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bro is shouting every single word like a carnival barker in rain 💀", "category": "mockery", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "The sound effects are completely out of sync with the physical actions 😭", "category": "mockery", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Look at the background actors actively struggling not to laugh on set 💀", "category": "mockery", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bro really wore a three-piece suit to advertise a silicone ice tray 🤡", "category": "mockery", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bhai ye acting dekh ke meri aankhein dukhne lagi hai 💀 band karo.", "category": "mockery", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Ee commercial lo acting chustunte navvu aagatledu asalu 😭 comedy.", "category": "mockery", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Click link in bio for guaranteed free retailer gift card code.", "category": "spam", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Join t.me/invest_pro for daily fifty percent compounding interest payouts.", "category": "spam", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "WhatsApp me on +1555666777 for instant crypto wallet key recovery.", "category": "spam", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Earn $500 weekly by completing simple online typing jobs from mobile.", "category": "spam", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Free social media verification badge service message @meta_verify on TG.", "category": "spam", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Visit bit.ly/fast-cash-app for instant hundred dollar referral bonus.", "category": "spam", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "DM me for confidential football betting tips with 100% win guarantee.", "category": "spam", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Claim free Bitcoin token airdrop before registration window terminates.", "category": "spam", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Get fifty thousand followers in one hour visit social-growth-direct.com.", "category": "spam", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Invest with certified financial manager Mr. Robert on Telegram channel.", "category": "spam", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Check out my profile for secret e-commerce masterclass link free.", "category": "spam", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "WhatsApp +918887776665 for luxury designer replica handbags catalog.", "category": "spam", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Make money rating mobile apps from home daily PayPal transfer.", "category": "spam", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Telegram @crypto_whales_signals for premium VIP trade setup alerts.", "category": "spam", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Free gaming currency gift card generator link in profile description.", "category": "spam", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Message on WhatsApp for authentic driver license without taking test.", "category": "spam", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Double your funds in forty-eight hours with safe automated trading pool.", "category": "spam", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Click link to claim seven hundred dollar fast fashion shopping spree card.", "category": "spam", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bhai daily 2000 kamane ke liye Telegram channel join karo abhi.", "category": "spam", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bio lo unna link click chesi free ga daily income earn cheyandi.", "category": "spam", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bro entered the chat and chose absolute violence 😂", "category": "banter_meme", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "The comedic timing on that drop was immaculate 💀", "category": "banter_meme", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bro really thought he was smooth with that slide 😭", "category": "banter_meme", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Me watching this while my life is falling apart lmao 😂", "category": "banter_meme", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bro woke up and decided to break the internet today 🔥", "category": "banter_meme", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "The aura points gained from that maneuver are astronomical 💀", "category": "banter_meme", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bro is playing 4D chess while we are playing checkers 😭", "category": "banter_meme", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bro really channeled his inner superhero for three seconds 😂", "category": "banter_meme", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "That punchline hit harder than Monday morning alarm 💀", "category": "banter_meme", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bro is the CEO of unexpected plot twists 😭", "category": "banter_meme", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bro said 'observe' and did the impossible maneuver 😂", "category": "banter_meme", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "The sheer confidence is radiating through my phone screen 🔥", "category": "banter_meme", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bro turned an ordinary moment into a legendary meme 💀", "category": "banter_meme", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bro really hit us with the emotional damage combo 😭", "category": "banter_meme", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bro is casually rewriting the laws of nature lmao 😂", "category": "banter_meme", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "That transition was smoother than silk sheets on bed 🔥", "category": "banter_meme", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bro found the secret cheat codes to the universe 💀", "category": "banter_meme", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "The definition of 'task failed successfully' right here 😭", "category": "banter_meme", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bhai ye video dekh ke din ban gaya mera lmao 😂", "category": "banter_meme", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bro asalu next level entertainment idi fr fr 💀", "category": "banter_meme", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "What is the frequency response spectrum of the dynamic drivers?", "category": "neutral", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Does this cellular model support dual physical SIM connectivity?", "category": "neutral", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Is there an available option for expedited overnight priority delivery?", "category": "neutral", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Can this chassis be mounted vertically on standard wooden wall studs?", "category": "neutral", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "What is the exact glass panel thickness in millimeters?", "category": "neutral", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Are future software firmware updates provided completely free of charge?", "category": "neutral", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Does this package ship in plain discrete brown box packaging?", "category": "neutral", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "What is the maximum refresh resolution supported via the DisplayPort?", "category": "neutral", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Is this chemical formula safe to use around household indoor pets?", "category": "neutral", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Where on the unit chassis can I locate the hardware serial number?", "category": "neutral", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Can I modify the destination delivery address prior to final dispatch?", "category": "neutral", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "What is the expected standby battery life when left unpowered?", "category": "neutral", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Are there multiple interchangeable strap sizes included inside the box?", "category": "neutral", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Does this setup require professional electrical installation or is it DIY?", "category": "neutral", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Is this model backward compatible with previous generation dock accessories?", "category": "neutral", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "What safety regulatory certifications does the AC power adapter hold?", "category": "neutral", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Can I purchase just a standalone replacement charging cradle?", "category": "neutral", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "What is the decibel noise rating produced on the maximum fan setting?", "category": "neutral", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bhai iska detailed user manual online download kar sakte hai PDF format me?", "category": "neutral", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Ee product ki international shipping charges entha padathayi approx ga?", "category": "neutral", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bought again for my home office setup, works brilliantly on desk ❤️", "category": "positive", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Ordered again, reliable merchant and prompt delivery dispatch every time 🔥", "category": "positive", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Outstanding value, performs better than competitor products three times the cost 💯", "category": "positive", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Packaging was exquisite and the device works like a dream right away ✨", "category": "positive", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Customer service team was remarkably friendly, polite, and efficient 🙌", "category": "positive", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Five stars rating, high quality materials and seamless reliable functionality ❤️", "category": "positive", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Arrived in forty-eight hours, immaculate condition, highly satisfied with order 🔥", "category": "positive", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "The ergonomic comfort is top notch, zero hand fatigue after all-day usage 💯", "category": "positive", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Third reorder from this storefront, top-notch quality consistency ✨", "category": "positive", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Truly a game changer for my daily workflow productivity, love it so much ❤️", "category": "positive", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Very impressed by the battery longevity and ultra-fast charging speeds 🔥", "category": "positive", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Exceptional build quality, feels very solid and premium in your hands 💯", "category": "positive", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Delighted with this purchase, exceeded every single performance benchmark 🙌", "category": "positive", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Superb craftsmanship, crystal clear instructions, and instant easy setup ✨", "category": "positive", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bought again as a present for my father, he loves using it daily ❤️", "category": "positive", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Fast dispatch and real-time tracking notifications provided throughout 🔥", "category": "positive", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Best customer shopping experience I have had online in a very long time 💯", "category": "positive", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Solid 10/10 product rating, will definitely spread the word to friends 🙌", "category": "positive", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Bhai delivery bohot fast thi aur product ekdum top class nikla ❤️", "category": "positive", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
+{"text": "Chala bagundi item, premium look and super smooth performance 🔥", "category": "positive", "source": "synthetic_curated_corpus_v2", "label_method": "synthetic", "split": "val"}
