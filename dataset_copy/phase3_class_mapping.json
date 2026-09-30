@@ -1,0 +1,10 @@
+{
+  "product_complaint": 0,
+  "service_complaint": 1,
+  "fatigue": 2,
+  "mockery": 3,
+  "spam": 4,
+  "banter_meme": 5,
+  "neutral": 6,
+  "positive": 7
+}
