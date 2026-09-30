@@ -8,3 +8,4 @@ __pycache__/
 *.sqlite
 *.joblib
 .ipynb_checkpoints/
+worktodo/
