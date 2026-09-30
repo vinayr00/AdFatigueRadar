@@ -12,7 +12,7 @@
 | **Component Scope** | Person 1 AI / NLP Layer only (`backend/nlp/`, `data/`, `tests/nlp/`) | Strict boundary preserved; 0 out-of-scope files modified | **PASSED** |
 | **Input Contract** | `CommentEvent` (JSON / dict / dataclass) | Supported via `CommentEvent` & `CommentClassifier.classify()` | **PASSED** |
 | **Output Contract** | Frozen `NLPResult` schema (`comment_id`, `sentiment`, `sentiment_score`, `category`, `confidence`, `critical_complaint`) | Emitted deterministically matching frozen JSON contract exactly (6 fields) | **PASSED** |
-| **Stage 1 Sentiment** | Local RoBERTa sequence classification on CPU | Loaded once locally (`twitter-roberta-base-sentiment-latest`), `local_files_only=True` | **PASSED** |
+| **Stage 1 Sentiment** | Local RoBERTa sequence classification on CPU | Loaded once locally (`twitter-roberta-base-sentiment-latest`), uncalibrated softmax | **PASSED** |
 | **Stage 2 Taxonomy** | Real 8-class taxonomy ML classifier (no regex scoring) | Sentence-embeddings (768-dim) + Logistic Regression + Fitted Temperature Scaling | **PASSED** |
 | **Held-Out Test Accuracy** | Measured on 320 held-out synthetic samples | **95.00% Accuracy (304 / 320 correct)**, **0.9499 Macro-F1** | **PASSED** |
 | **Synthetic Stress Accuracy** | Measured on 64 synthetic edge-case samples | **95.31% Accuracy (61 / 64 correct)**, **0.9530 Macro-F1** | **PASSED** |
@@ -28,7 +28,7 @@
 
 ### 2. Verified Held-Out Test Evaluation Metrics (320 Samples)
 
-Evaluated on the 320-sample held-out synthetic test split (`data/test_human_audited/labels.jsonl`, exactly 40 samples per class):
+Evaluated on the 320-sample held-out synthetic test split (`data/test_human_audited/labels.jsonl`, dataset version commit `ab45270`, exactly 40 samples per class):
 
 - **Overall Accuracy**: **95.00%** (304 / 320 correct)
 - **Macro-F1 Score**: **0.9499**
@@ -90,20 +90,20 @@ positive                  0      0      0      0      0      0      0      8
 
 ---
 
-### 4. Stage 1 Sentiment Alignment & Proxy Calibration
+### 4. Stage 1 Sentiment Alignment & Proxy Calibration (Uncalibrated Softmax)
 
 - **Pre-Trained Backbone**: Stage 1 utilizes `cardiffnlp/twitter-roberta-base-sentiment-latest` loaded locally on CPU.
 - **Dataset Context**: Ground-truth datasets (`labels.jsonl`) were annotated strictly for the custom 8-class taxonomy; no independent 3-way sentiment labeling was conducted.
-- **Proxy Calibration Numbers**:
-  - Unambiguous validation subset (80 samples: `positive`, `neutral`, `product_complaint`, `service_complaint` mapped to pos/neu/neg).
-  - ECE Before ($T=1.0$): **0.1156**
-  - Fitted Temperature $T$: **1.3109** (via bounded NLL loss optimization)
-  - ECE After ($T=1.3109$): **0.1357**
-- **Plain Truth on Application**:
-  - This fitted temperature ($T = 1.3109$) is **documented as an exploratory proxy study only and is NOT applied in `sentiment.py`**.
-  - `sentiment.py` executes direct softmax ($T = 1.0$) over RoBERTa logits.
-  - **Optimistic Limitation**: Because this proxy set excludes `fatigue` and `mockery`, the proxy ECE estimate is inherently optimistic.
-  - `sentiment_score` in `NLPResult` outputs the normalized softmax probability (with domain repeat-purchase and ad-fatigue guards). The frozen `NLPResult` contract remains unchanged.
+- **Proxy Calibration Study (Inconclusive / Failed Experiment)**:
+  - An exploratory proxy calibration experiment was conducted on the unambiguous validation subset (80 samples: `positive`, `neutral`, `product_complaint`, `service_complaint` mapped to pos/neu/neg).
+  - **ECE Before ($T=1.0$)**: **0.1156**
+  - **Fitted Temperature $T$**: **1.3109** (via bounded NLL loss optimization)
+  - **ECE After ($T=1.3109$)**: **0.1357** (ECE actually degraded due to proxy distribution mismatch)
+- **Plain Truth on Application & Contract Conformance**:
+  - Because ECE increased and the mapped proxy distribution excludes `fatigue` and `mockery` (making any estimate structurally flawed), this temperature scaling is **NOT applied in `sentiment.py`**.
+  - `sentiment.py` emits **standard uncalibrated softmax probability scores** directly from RoBERTa logits (with domain repeat-purchase and ad-fatigue safety guards).
+  - `sentiment_score` in `NLPResult` represents this uncalibrated softmax probability of the predicted sentiment label $[0.0, 1.0]$. The frozen `NLPResult` contract remains unchanged.
+
 
 ---
 

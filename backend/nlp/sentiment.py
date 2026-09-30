@@ -4,7 +4,7 @@ AdFatigueRadar — Stage 1: General Sentiment Classifier
 PERSON 1: AI / NLP Layer
 
 Classifies comments into general sentiment: [negative, neutral, positive]
-with calibrated softmax probability scores using a locally cached RoBERTa model.
+with standard uncalibrated softmax probability scores using a locally cached RoBERTa model.
 CPU-only, loaded once, eval mode, torch.no_grad, fully deterministic.
 """
 

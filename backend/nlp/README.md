@@ -2,7 +2,7 @@
 ==============================================
 
 ## 1. Overview
-The `backend/nlp/` package provides the complete, isolated AI/NLP layer for AdFatigueRadar. It processes raw social ad comments into calibrated sentiment and an 8-class ad-fatigue taxonomy, emits the frozen `NLPResult` contract, and provides replay caching and baseline metrics.
+The `backend/nlp/` package provides the complete, isolated AI/NLP layer for AdFatigueRadar. It processes raw social ad comments into sentiment (uncalibrated RoBERTa softmax) and a calibrated 8-class ad-fatigue taxonomy, emits the frozen `NLPResult` contract, and provides replay caching and baseline metrics.
 
 ## 2. Frozen Input and Output Contracts
 
@@ -44,9 +44,10 @@ The `backend/nlp/` package provides the complete, isolated AI/NLP layer for AdFa
 
 ## 4. Key Components
 - `preprocessing.py`: Deterministic text & Unicode normalization, feature extraction.
-- `sentiment.py`: Stage 1 3-class sentiment classifier (Negative / Neutral / Positive).
+- `sentiment.py`: Stage 1 3-class sentiment classifier (Negative / Neutral / Positive) using uncalibrated RoBERTa softmax.
 - `taxonomy.py`: Stage 2 8-class taxonomy classifier with 'again' disambiguation and mockery vs banter separation.
-- `calibration.py`: Temperature scaling calibration ($T = 1.12$) & ECE evaluation.
+- `calibration.py`: Temperature scaling calibration fitted on Stage 2 taxonomy ($T = 0.5467$) & ECE evaluation.
+
 - `classifier.py`: `CommentClassifier` unifying the two-stage pipeline.
 - `cache.py`: `NLPCache` deterministic replay cache keyed by `hash(comment_id + model_ver + preproc_ver)`.
 - `inference.py`: `StreamCommentProcessor` for streaming and batched execution.
