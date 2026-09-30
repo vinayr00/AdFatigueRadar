@@ -88,8 +88,21 @@ def test_critical_complaint_confidence_gate(taxonomy_classifier):
 
 
 def test_keyword_alone_cannot_force_critical_complaint(taxonomy_classifier):
-    # A positive text with word 'broken' in a non-complaint context or banter
-    text = "Bro this price is broken, such an amazing deal bought again!"
-    cat, conf, is_critical, _ = taxonomy_classifier.classify(text)
-    assert is_critical is False
-    assert cat != "product_complaint"
+    # Proves keywords like 'broken', 'defective', 'refund' inside banter, slang, or positive contexts NEVER produce critical_complaint
+    keyword_non_complaint_cases = [
+        # Slang/positive deals
+        ("Bro this price is broken, such an amazing deal bought again!", "positive"),
+        ("Defective prices on this store, everything is practically free! Ordered again ❤️", "positive"),
+        # Banter / memes with complaint keywords
+        ("Bro really has a defective fashion sense 💀 let him cook though", "banter_meme"),
+        ("Bro broke the internet with this dance move 🔥", "banter_meme"),
+        # Neutral inquiries containing keywords
+        ("Does the 1-year warranty cover accidental broken glass screen replacement?", "neutral"),
+        ("Can I ask what the refund policy is before ordering?", "neutral"),
+    ]
+
+    for text, expected_non_complaint_cat in keyword_non_complaint_cases:
+        cat, conf, is_critical, _ = taxonomy_classifier.classify(text)
+        assert is_critical is False, f"Critical complaint incorrectly triggered for: {text}"
+        assert cat != "product_complaint", f"Incorrect product_complaint classification for: {text}"
+

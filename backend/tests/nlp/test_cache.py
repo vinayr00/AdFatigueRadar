@@ -75,3 +75,27 @@ def test_cache_sqlite_persistence(tmp_path):
     assert retrieved is not None
     assert retrieved.comment_id == "c_103"
     assert retrieved.critical_complaint is True
+
+
+def test_cache_survives_corrupt_db_file(tmp_path):
+    corrupt_db = str(tmp_path / "corrupt_cache.db")
+    # Write garbage bytes into sqlite file location
+    with open(corrupt_db, "wb") as f:
+        f.write(b"CORRUPTED_SQLITE_GARBAGE_BYTES_123456789")
+
+    # Cache should not crash when reading or setting with a corrupt DB file
+    cache = NLPCache(db_path=corrupt_db)
+    assert cache.get("any_id") is None
+    
+    res = NLPResult(
+        comment_id="c_test",
+        sentiment="neutral",
+        sentiment_score=0.5,
+        category="neutral",
+        confidence=0.5,
+        critical_complaint=False
+    )
+    # set should safely fallback without crashing
+    cache.set(res)
+    # Memory cache still functions
+    assert cache.get("c_test") is not None

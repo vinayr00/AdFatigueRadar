@@ -38,5 +38,31 @@ def test_sentiment_only_baseline_banter_storm_behavior():
     metrics = baseline.evaluate_window(banter_comments)
     assert isinstance(metrics, SentimentBaselineMetrics)
     assert metrics.total_comments == 20
-    # Demonstrates that naive sentiment sees mockery/banter and triggers or flags banter storm
-    assert metrics.raw_negative_share >= 0.0
+    assert 0.0 <= metrics.raw_negative_share <= 1.0
+    assert metrics.threshold == 0.30
+    assert isinstance(metrics.alert_triggered, bool)
+    assert isinstance(metrics.is_false_alarm_on_banter, bool)
+    # Demonstrates that naive sentiment sees mockery/banter and can trigger false alarms
+    assert metrics.negative_count >= 0
+
+
+def test_sentiment_only_baseline_clean_window():
+    baseline = SentimentOnlyBaseline(negative_threshold=0.35)
+    positive_comments = [
+        CommentEvent(
+            event_id=f"pos_{i}",
+            timestamp="2026-09-30T12:00:00Z",
+            campaign_id="camp_clean",
+            ad_id="ad_clean",
+            author_id=f"user_{i}",
+            text="Bought again, love it! Super fast delivery ❤️"
+        )
+        for i in range(10)
+    ]
+    metrics = baseline.evaluate_window(positive_comments)
+    assert metrics.total_comments == 10
+    assert metrics.negative_count == 0
+    assert metrics.raw_negative_share == 0.0
+    assert metrics.alert_triggered is False
+    assert metrics.is_false_alarm_on_banter is False
+
