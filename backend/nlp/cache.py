@@ -17,7 +17,8 @@ import sqlite3
 import hashlib
 from typing import Optional, Dict, Any, Tuple
 
-from . import MODEL_VERSION, PREPROCESSING_VERSION, NLPResult
+from .constants import MODEL_VERSION, PREPROCESSING_VERSION
+from . import NLPResult
 
 
 class NLPCache:
@@ -25,6 +26,7 @@ class NLPCache:
     Two-tier (In-Memory + SQLite) Replay Cache.
     Ensures zero redundant NLP computation during multi-seed replay simulation
     while maintaining strict version isolation.
+    Gracefully handles corrupt databases by falling back to memory caching.
     """
     def __init__(self, db_path: Optional[str] = None):
         self.memory_cache: Dict[str, Dict[str, Any]] = {}
@@ -33,10 +35,16 @@ class NLPCache:
         self.db_path = db_path
         
         if self.db_path:
-            self._init_db()
+            try:
+                self._init_db()
+            except Exception:
+                # Corrupt DB or disk error -> safely disable SQLite L2 cache and rely on memory L1
+                self.db_path = None
 
     def _init_db(self):
         """Initializes SQLite cache schema."""
+        if not self.db_path:
+            return
         os.makedirs(os.path.dirname(os.path.abspath(self.db_path)), exist_ok=True)
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""

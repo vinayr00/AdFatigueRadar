@@ -4,13 +4,14 @@ AdFatigueRadar — Confidence Calibration Module
 PERSON 1: AI / NLP Layer
 
 Provides temperature scaling and probability calibration to ensure predicted
-confidence scores reflect true empirical accuracy. Crucial for downstream
-confidence-gated critical complaint triggers and Wilson score safety bounds.
+confidence scores reflect true empirical accuracy.
+Fitted on the VALIDATION split only via Negative Log-Likelihood optimization.
 """
 
 import math
-from typing import List, Dict, Union, Tuple
+from typing import List, Dict, Union, Tuple, Optional
 import numpy as np
+from scipy.optimize import minimize_scalar
 
 
 class TemperatureScaler:
@@ -19,33 +20,61 @@ class TemperatureScaler:
     
     For logits z:
         p_i = exp(z_i / T) / sum_j exp(z_j / T)
-        
-    If raw probabilities p are passed, pseudo-logits are reconstructed:
-        z_i = log(max(p_i, eps))
-        and rescaled by T.
     """
-    def __init__(self, temperature: float = 1.15, eps: float = 1e-7):
+    def __init__(self, temperature: float = 1.0, eps: float = 1e-7):
         if temperature <= 0.0:
             raise ValueError(f"Temperature must be strictly positive, got {temperature}")
         self.temperature = float(temperature)
         self.eps = eps
 
-    def calibrate_logits(self, logits: List[float]) -> List[float]:
+    def fit(self, logits: np.ndarray, labels: np.ndarray) -> float:
+        """
+        Fits optimal temperature T on the validation split by minimizing NLL loss.
+        
+        Args:
+            logits: np.ndarray of shape (N, num_classes)
+            labels: np.ndarray of integer class indices of shape (N,)
+            
+        Returns:
+            optimal_temperature (float)
+        """
+        logits = np.asarray(logits, dtype=np.float64)
+        labels = np.asarray(labels, dtype=np.int64)
+        
+        def nll_loss(t: float) -> float:
+            if t <= 1e-3:
+                return 1e9
+            scaled_logits = logits / t
+            # Log-sum-exp trick for numerical stability
+            max_logits = np.max(scaled_logits, axis=1, keepdims=True)
+            log_sum_exp = max_logits + np.log(np.sum(np.exp(scaled_logits - max_logits), axis=1, keepdims=True))
+            log_probs = scaled_logits - log_sum_exp
+            n = logits.shape[0]
+            nll = -np.sum(log_probs[np.arange(n), labels]) / n
+            return float(nll)
+
+        res = minimize_scalar(nll_loss, bounds=(0.05, 10.0), method="bounded")
+        if res.success:
+            self.temperature = round(float(res.x), 4)
+        return self.temperature
+
+    def calibrate_logits(self, logits: Union[List[float], np.ndarray]) -> List[float]:
         """Calibrate raw logits via softmax with temperature scaling."""
-        scaled = [z / self.temperature for z in logits]
-        max_val = max(scaled)
-        exp_vals = [math.exp(v - max_val) for v in scaled]
-        sum_exp = sum(exp_vals)
+        z = np.asarray(logits, dtype=np.float64) / self.temperature
+        max_val = np.max(z)
+        exp_vals = np.exp(z - max_val)
+        sum_exp = np.sum(exp_vals)
         if sum_exp <= 0:
             return [1.0 / len(logits)] * len(logits)
-        return [round(v / sum_exp, 6) for v in exp_vals]
+        probs = exp_vals / sum_exp
+        return [round(float(v), 6) for v in probs]
 
-    def calibrate_probabilities(self, probs: List[float]) -> List[float]:
-        """Calibrate probabilities by converting to pseudo-logits and applying temperature."""
-        if not probs:
+    def calibrate_probabilities(self, probs: Union[List[float], np.ndarray]) -> List[float]:
+        """Calibrate probabilities by reconstructing pseudo-logits and applying temperature."""
+        if not len(probs):
             return []
-        # Reconstruct pseudo-logits with numerical stability
-        logits = [math.log(max(p, self.eps)) for p in probs]
+        p = np.asarray(probs, dtype=np.float64)
+        logits = np.log(np.maximum(p, self.eps))
         return self.calibrate_logits(logits)
 
     def calibrate_dict(self, prob_dict: Dict[str, float]) -> Dict[str, float]:
@@ -54,18 +83,6 @@ class TemperatureScaler:
         raw_vals = [prob_dict[k] for k in keys]
         calibrated_vals = self.calibrate_probabilities(raw_vals)
         return {k: v for k, v in zip(keys, calibrated_vals)}
-
-    def calibrate_confidence(self, top_prob: float, num_classes: int = 8) -> float:
-        """
-        Calibrates a single top-1 confidence score against a uniform prior background.
-        """
-        top_prob = max(0.0, min(1.0, top_prob))
-        if num_classes <= 1 or top_prob >= 0.999:
-            return top_prob
-        # Reconstruct pseudo-logit for binary or top-vs-rest
-        other_prob = max(self.eps, (1.0 - top_prob) / (num_classes - 1))
-        calibrated = self.calibrate_probabilities([top_prob] + [other_prob] * (num_classes - 1))
-        return round(float(calibrated[0]), 4)
 
 
 def compute_expected_calibration_error(
@@ -88,7 +105,6 @@ def compute_expected_calibration_error(
         bin_lower = bin_boundaries[i]
         bin_upper = bin_boundaries[i + 1]
         
-        # Indices in bin
         if i == num_bins - 1:
             in_bin = [j for j, c in enumerate(confidences) if bin_lower <= c <= bin_upper]
         else:
@@ -103,5 +119,5 @@ def compute_expected_calibration_error(
     return round(float(ece), 4)
 
 
-# Default global calibrated scaler instance
-default_scaler = TemperatureScaler(temperature=1.12)
+# Default global calibrated scaler instance (will be updated with fitted temperature)
+default_scaler = TemperatureScaler(temperature=1.0)
