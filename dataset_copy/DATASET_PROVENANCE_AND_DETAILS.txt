@@ -1,84 +1,157 @@
 ===============================================================================
-AdFatigueRadar — Complete Dataset Provenance, Origin & Placement Guide
+AdFatigueRadar — Master Dataset, Model Artifacts & File Placement Guide
 ===============================================================================
 
-This folder contains clean copies of all datasets used in the AdFatigueRadar 
-sentiment analysis, ad-fatigue detection, and risk scoring pipeline.
+This folder contains copies of all datasets, benchmark splits, and trained model 
+classifier artifacts used in the AdFatigueRadar AI/NLP & Risk Scoring pipeline, 
+along with the exact intended file paths and download instructions for large weights.
 
 -------------------------------------------------------------------------------
 1. RAW SOCIAL MEDIA SOURCE DATASETS (CSVs)
 -------------------------------------------------------------------------------
 
 1. raw_youtube_data.csv (27.2 MB)
-   • Source / Origin: YouTube Data API v3 & public video ad comment streams.
+   • Origin: YouTube Data API v3 & commercial video ad comment streams.
    • Content: Viewer comments, reactions, and engagement on commercial video ads.
-   • Original Location in Project: realdata/youtube_data.csv and data/real_world/raw/youtube_data.csv
-   • Usage: Ingestion source for ad fatigue, sarcasm, and product complaint extraction.
+   • EXACT INTENDED PATHS:
+     -> realdata/youtube_data.csv
+     -> data/real_world/raw/youtube_data.csv
 
 2. raw_reddit_data.csv (5.8 MB)
-   • Source / Origin: Reddit API / pushshift scraping of sponsored posts, brand discussion threads, and ad complaints.
+   • Origin: Reddit API / pushshift scraping of sponsored posts and commercial ad threads.
    • Content: Long-form user feedback, ad fatigue discussions, and service complaints.
-   • Original Location in Project: realdata/reddit_data.csv and data/real_world/raw/reddit_data.csv
-   • Usage: Ingestion source for long-text customer feedback and brand mockery.
+   • EXACT INTENDED PATHS:
+     -> realdata/reddit_data.csv
+     -> data/real_world/raw/reddit_data.csv
 
 3. raw_tweets.csv (102.5 KB)
-   • Source / Origin: Twitter / X API v2 stream of brand campaign mentions and promotional replies.
+   • Origin: Twitter / X API v2 stream of brand campaign mentions and ad replies.
    • Content: Short-form tweets, emojis, hashtags, and quick consumer reactions.
-   • Original Location in Project: realdata/tweets.csv and data/real_world/raw/tweets.csv
-   • Usage: Ingestion source for fast emoji reactions, memes, and repeat ad complaints.
+   • EXACT INTENDED PATHS:
+     -> realdata/tweets.csv
+     -> data/real_world/raw/tweets.csv
 
 -------------------------------------------------------------------------------
 2. PROCESSED & LABELED REAL-WORLD DATASET SPLITS (JSONL)
 -------------------------------------------------------------------------------
 
 4. real_world_train.jsonl (874 records, 439.8 KB)
-   • Source / Origin: Curated from the 1,461-sample real-world pool after PII sanitization and deduplication.
-   • Content: 8-class taxonomy labeled training samples with comment text and sentiment hints.
-   • Original Location in Project: data/real_world/train/train.jsonl
-   • Usage: Used to fit the Stage 2 Logistic Regression classifier head on top of RoBERTa 768-dim embeddings.
+   • Origin: Processed & PII-sanitized from the 1,461-sample real-world pool.
+   • Content: 8-class taxonomy labeled training samples with comment text.
+   • EXACT INTENDED PATH:
+     -> data/real_world/train/train.jsonl
+     -> data/splits/real_world_train.jsonl
 
 5. real_world_validation.jsonl (288 records, 135.8 KB)
-   • Source / Origin: Disjoint validation split from the real-world annotated pool.
-   • Content: Unseen labeled samples.
-   • Original Location in Project: data/real_world/validation/validation.jsonl
-   • Usage: Used for Temperature Scaling calibration (fitted T=1.0494) and operational threshold tuning (tau=0.50).
+   • Origin: Disjoint validation split from the real-world annotated pool.
+   • Content: Unseen labeled samples for calibration and hyperparameter validation.
+   • EXACT INTENDED PATH:
+     -> data/real_world/validation/validation.jsonl
+     -> data/splits/real_world_val.jsonl
 
 6. real_world_test_frozen.jsonl (299 records, 143.9 KB)
-   • Source / Origin: Cryptographically frozen held-out real-world test set (SHA-256: 82dacabc48ba6d5ae57df9b647d6928e1d743a6d45f4f46a297920786cfba7e9).
+   • Origin: Cryptographically frozen held-out real-world test set (SHA-256: 82dacabc48ba6d5ae57df9b647d6928e1d743a6d45f4f46a297920786cfba7e9).
    • Content: 299 diverse real comments across all 8 taxonomy categories.
-   • Original Location in Project: data/real_world/test/test.jsonl
-   • Usage: Final Phase 3 & Phase 4 test set. Achieved 65.55% Accuracy, 0.6200 Macro-F1, 0.0626 ECE.
+   • EXACT INTENDED PATH:
+     -> data/real_world/test/test.jsonl
+     -> data/splits/real_world_test.jsonl
 
 7. real_world_ood.jsonl (50 records, 26.4 KB)
-   • Source / Origin: Non-advertising general conversational Reddit/YouTube comment threads.
-   • Content: Out-of-distribution comments without advertising context.
-   • Original Location in Project: data/real_world/ood/ood.jsonl
-   • Usage: Stress testing model generalization under domain shift (Accuracy: 42.00%).
+   • Origin: Non-advertising general conversational Reddit/YouTube comment threads.
+   • Content: Out-of-Distribution comments without advertising context.
+   • EXACT INTENDED PATH:
+     -> data/real_world/ood/ood.jsonl
+     -> data/splits/real_world_ood.jsonl
 
 8. multilingual_test.jsonl (16 records, 7.0 KB)
-   • Source / Origin: Real-world non-English comments (Spanish, German, Hindi, French).
+   • Origin: Real-world non-English comments (Spanish, German, Hindi, French).
    • Content: Multilingual ad feedback samples.
-   • Original Location in Project: data/splits/multilingual_test.jsonl
-   • Usage: Diagnostic test revealing English-only RoBERTa architectural boundary (Accuracy: 18.75%).
+   • EXACT INTENDED PATH:
+     -> data/splits/multilingual_test.jsonl
 
 9. adjudicated_ground_truth_pool.jsonl (1,461 records, 719.5 KB)
-   • Source / Origin: Master annotated pool produced by dual-annotator pipeline with Cohen's kappa arbitration (kappa = 0.6923).
+   • Origin: Master annotated pool produced by dual-annotator pipeline with Cohen's kappa arbitration (kappa = 0.6923).
    • Content: All 1,461 adjudicated comments with Annotator A/B outputs.
-   • Original Location in Project: data/real_world/annotation/adjudicated_human_labels.jsonl
+   • EXACT INTENDED PATH:
+     -> data/real_world/annotation/adjudicated_human_labels.jsonl
 
 -------------------------------------------------------------------------------
 3. SYNTHETIC & ADVERSARIAL BENCHMARK SETS (JSONL)
 -------------------------------------------------------------------------------
 
 10. synthetic_test_baseline.jsonl (320 records, 60.1 KB)
-    • Source / Origin: Authored synthetic dataset (40 samples per class).
+    • Origin: Authored synthetic baseline benchmark (40 samples per class).
     • Content: Balanced synthetic ad comments.
-    • Original Location in Project: data/test_human_audited/labels.jsonl
-    • Usage: Phase 0 synthetic baseline test set (Accuracy: 95.00%).
+    • EXACT INTENDED PATH:
+      -> data/test_human_audited/labels.jsonl
 
 11. synthetic_stress_set.jsonl (64 records, 6.4 KB)
-    • Source / Origin: Adversarial edge cases, sarcasm, and tricky repeat-purchase phrases ("bought again" vs "ad again").
+    • Origin: Adversarial edge cases, sarcasm, and repeat-purchase phrasing ("bought again" vs "ad again").
     • Content: 64 stress test comments (8 per class).
-    • Original Location in Project: data/test_human_audited/stress_set.jsonl
-    • Usage: False-positive and adversarial robustness evaluation (Accuracy: 60.94%).
+    • EXACT INTENDED PATH:
+      -> data/test_human_audited/stress_set.jsonl
+
+-------------------------------------------------------------------------------
+4. TRAINED CLASSIFIER HEAD ARTIFACTS & CONFIGS (.joblib / .json)
+-------------------------------------------------------------------------------
+
+12. phase3_final_model.joblib (50 KB)
+    • Origin: Trained multi-signal Logistic Regression classification head.
+    • Content: Fits 768-dim RoBERTa embeddings + 3-dim sentiment posteriors to the 8 ad-fatigue categories.
+    • EXACT INTENDED PATH:
+      -> backend/nlp/artifacts/phase3_final_model.joblib
+
+13. taxonomy_model.joblib (50 KB)
+    • Origin: Phase 0 baseline taxonomy classification artifact.
+    • EXACT INTENDED PATH:
+      -> backend/nlp/artifacts/taxonomy_model.joblib
+
+14. phase3_temperature_scaler.json (0.2 KB)
+    • Origin: Calibration parameter fitted on validation set via NLL loss minimization (T=1.0494).
+    • EXACT INTENDED PATH:
+      -> backend/nlp/artifacts/phase3_temperature_scaler.json
+
+15. phase3_class_mapping.json (0.3 KB)
+    • Origin: 8-class index-to-category dictionary mapping.
+    • EXACT INTENDED PATH:
+      -> backend/nlp/artifacts/phase3_class_mapping.json
+
+16. phase3_config.json (0.5 KB)
+    • Origin: Pipeline hyperparameter and operational threshold (tau=0.50) configuration.
+    • EXACT INTENDED PATH:
+      -> backend/nlp/artifacts/phase3_config.json
+
+17. checksums.sha256 (0.5 KB)
+    • Origin: Cryptographic SHA-256 integrity manifest for fail-closed production server startup.
+    • EXACT INTENDED PATH:
+      -> backend/nlp/artifacts/checksums.sha256
+
+-------------------------------------------------------------------------------
+5. PRE-TRAINED TRANSFORMER BACKBONE WEIGHTS (DOWNLOAD INSTRUCTIONS)
+-------------------------------------------------------------------------------
+
+These are large neural network weights (>100 MB each) excluded from Git:
+
+• Models:
+  1. twitter-roberta-base-sentiment-latest (~500 MB)
+     -> EXACT INTENDED PATH: data/models/twitter-roberta-base-sentiment-latest/
+  2. twitter-roberta-base-irony (~500 MB)
+     -> EXACT INTENDED PATH: data/models/twitter-roberta-base-irony/
+  3. twitter-xlm-roberta-base-sentiment (~1.1 GB)
+     -> EXACT INTENDED PATH: data/models/twitter-xlm-roberta-base-sentiment/
+
+• HOW TO DOWNLOAD AUTOMATICALLY:
+  Run the download script from the project root:
+  ```powershell
+  python data/download_models.py
+  ```
+
+-------------------------------------------------------------------------------
+6. RUNTIME CACHE & STATE DATABASES (*.db / *.sqlite)
+-------------------------------------------------------------------------------
+
+• nlp_cache.db / *.sqlite
+  -> EXACT INTENDED PATH: nlp_cache.db (or as configured by CACHE_DB_PATH)
+  -> Purpose: Two-tier inference cache storing hashed comment results to accelerate replay simulations.
+  -> Creation: Created automatically upon server launch.
 ===============================================================================
