@@ -24,7 +24,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 
 from backend.api.auth import verify_api_key
 from backend.api.campaign_registry import get_registry
-from backend.models.backend_models import StatusResponse, TimelinePoint, SignalBreakdown, Severity
+from backend.models.backend_models import CommentSummary, StatusResponse, TimelinePoint, SignalBreakdown, Severity
 
 router = APIRouter(prefix="/campaigns", tags=["campaigns"])
 
@@ -54,7 +54,7 @@ async def get_status(campaign_id: str) -> JSONResponse:
                 "stale": False,
                 "anomaly": False,
                 "cooldown_remaining_minutes": None,
-                "config_version": "thresholds_v4",
+                "config_version": machine.config_version,
                 "reason_codes": [],
                 "sim_time": None,
                 "action_unverified": machine.action_unverified,
@@ -81,7 +81,7 @@ async def get_status(campaign_id: str) -> JSONResponse:
             "stale": latest.stale,
             "anomaly": latest.anomaly,
             "cooldown_remaining_minutes": latest.cooldown_remaining_minutes or None,
-            "config_version": "thresholds_v4",
+            "config_version": machine.config_version,
             "reason_codes": [r.value for r in latest.reason_codes],
             "sim_time": machine.aggregator.clock.current.isoformat() if machine.aggregator.clock.current else None,
             "action_unverified": machine.action_unverified,
@@ -101,6 +101,36 @@ async def get_timeline(campaign_id: str) -> JSONResponse:
         "campaign_id": campaign_id,
         "timeline": runner.get_timeline(),
     })
+
+
+@router.get("/{campaign_id}/comments")
+async def get_comments(
+    campaign_id: str,
+    limit: int = Query(default=100, ge=1, le=1000),
+) -> JSONResponse:
+    """Return recent rolling-window comment/NLP fields without author identity."""
+    reg = get_registry()
+    ctx = reg.get(campaign_id)
+    if ctx is None:
+        raise HTTPException(status_code=404, detail=f"Campaign '{campaign_id}' not found")
+    with ctx.lock:
+        comments = ctx.machine.aggregator.get_window_comments()[-limit:]
+        payload = [
+            CommentSummary(
+                event_id=item.event_id,
+                timestamp=item.timestamp,
+                campaign_id=item.campaign_id,
+                ad_id=item.ad_id,
+                text=item.text,
+                sentiment=item.sentiment,
+                sentiment_score=item.sentiment_score,
+                category=item.category,
+                confidence=item.confidence,
+                critical_complaint=item.critical_complaint,
+            ).model_dump(mode="json")
+            for item in comments
+        ]
+    return JSONResponse(content={"campaign_id": campaign_id, "comments": payload})
 
 
 @router.get("/{campaign_id}/stream")

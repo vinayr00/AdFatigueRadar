@@ -55,7 +55,8 @@ async def pause_campaign(
                 audience_risk=ctx.runner.latest_tick.audience_risk,
                 economic_risk=ctx.runner.latest_tick.economic_risk,
             )
-        result = ctx.runner._adapter.operator_pause(now, risk)
+        result = ctx.runner._adapter.operator_pause(now, risk, config_version=ctx.machine.config_version)
+        ctx.runner.record_action_reference(now, result)
 
     return JSONResponse(content=result.model_dump(mode="json"))
 
@@ -79,7 +80,8 @@ async def unpause_campaign(
                 economic_risk=ctx.runner.latest_tick.economic_risk,
             )
         try:
-            result = ctx.runner._adapter.operator_unpause(now, risk)
+            result = ctx.runner._adapter.operator_unpause(now, risk, config_version=ctx.machine.config_version)
+            ctx.runner.record_action_reference(now, result)
         except ValueError as e:
             raise HTTPException(status_code=409, detail=str(e))
 
@@ -111,11 +113,12 @@ async def override_campaign(
                 economic_risk=ctx.runner.latest_tick.economic_risk,
             )
         if action == "BLOCK":
-            result = ctx.runner._adapter.operator_block(now, risk)
+            result = ctx.runner._adapter.operator_block(now, risk, config_version=ctx.machine.config_version)
         else:
             try:
-                result = ctx.runner._adapter.operator_unblock(now, risk)
+                result = ctx.runner._adapter.operator_unblock(now, risk, config_version=ctx.machine.config_version)
             except ValueError as e:
                 raise HTTPException(status_code=409, detail=str(e))
+        ctx.runner.record_action_reference(now, result)
 
     return JSONResponse(content=result.model_dump(mode="json"))

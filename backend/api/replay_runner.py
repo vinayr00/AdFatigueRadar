@@ -39,6 +39,27 @@ class ReplayRunner(_SharedReplayRunner):
     def latest_tick(self) -> TickResult | None:
         return self._latest_tick
 
+    def record_action_reference(self, sim_time: datetime, action_result) -> None:
+        """Attach an operator action to the existing point at its simulated time."""
+        if not action_result.audit_event_id or not self._timeline:
+            return
+        point = self._timeline[-1]
+        if point.get("sim_time") != sim_time.isoformat():
+            return
+        point["state"] = action_result.new_state.value
+        point["config_version"] = self._machine.config_version
+        if action_result.audit_event_id not in point["action_events"]:
+            point["action_events"].append(action_result.audit_event_id)
+        reason_by_action = {
+            "PAUSE": ReasonCode.OPERATOR_PAUSE,
+            "UNPAUSE": ReasonCode.OPERATOR_UNPAUSE,
+            "BLOCK": ReasonCode.OPERATOR_BLOCK,
+            "UNBLOCK": ReasonCode.OPERATOR_UNBLOCK,
+        }
+        reason = reason_by_action.get(action_result.action)
+        if reason is not None and reason.value not in point["reason_codes"]:
+            point["reason_codes"].append(reason.value)
+
     def start(self, source: ReplaySource, speed: float = 1.0) -> None:
         if not os.environ.get("ADFR_HMAC_SECRET", ""):
             raise PermissionError("server secret unavailable")
@@ -146,7 +167,8 @@ class ReplayRunner(_SharedReplayRunner):
             self._last_sim_time = step_boundary
             if not self._start_audited:
                 self._audit.append(step_boundary, ActorType.SYSTEM, "REPLAY_START",
-                    [ReasonCode.REPLAY_START], RiskSnapshot(audience_risk=0.0, economic_risk=None))
+                    [ReasonCode.REPLAY_START], RiskSnapshot(audience_risk=0.0, economic_risk=None),
+                    config_version=self._machine.config_version)
                 self._start_audited = True
 
             for comment in comments:
@@ -170,6 +192,7 @@ class ReplayRunner(_SharedReplayRunner):
                     result.transition_reason_codes, result.path_taken or "PATH_A",
                     RiskSnapshot(audience_risk=result.audience_risk, economic_risk=result.economic_risk),
                     previous_state=result.previous_state,
+                    config_version=self._machine.config_version,
                 )
                 self._latest_tick = result
             elif result.state_changed:
@@ -179,18 +202,58 @@ class ReplayRunner(_SharedReplayRunner):
                     result.transition_reason_codes,
                     RiskSnapshot(audience_risk=result.audience_risk, economic_risk=result.economic_risk),
                     previous_state=result.previous_state, new_state=result.state,
+                    config_version=self._machine.config_version,
                 )
-            self._timeline.append({
-                "sim_time": step_boundary.isoformat(), "state": self._machine.state.value,
-                "severity": result.severity.value, "audience_risk": result.audience_risk,
-                "economic_risk": result.economic_risk, "stale": result.stale, "anomaly": result.anomaly,
-            })
+
+            from backend.models.backend_models import SignalBreakdown, TimelinePoint
+            signals = result.signals
+            point = TimelinePoint(
+                sim_time=step_boundary,
+                state=self._machine.state,
+                severity=result.severity,
+                audience_risk=result.audience_risk,
+                economic_risk=result.economic_risk,
+                signal_breakdown=SignalBreakdown(
+                    harmful_negative_ratio=signals.harmful_negative_ratio,
+                    sentiment_decay=signals.sentiment_decay,
+                    fatigue_mockery=signals.fatigue_mockery,
+                    comment_acceleration=signals.comment_acceleration,
+                    ctr_frequency=signals.ctr_frequency,
+                    critical_complaint_signal=signals.critical_complaint_signal,
+                    cpa_cpm_signal=signals.cpa_cpm_signal,
+                    roas_conversion_signal=signals.roas_conversion_signal,
+                ),
+                stale=result.stale,
+                anomaly=result.anomaly,
+                action_events=[],
+                reason_codes=result.reason_codes,
+                cooldown_remaining_minutes=result.cooldown_remaining_minutes,
+                config_version=self._machine.config_version,
+            )
+            action_names = {
+                "PAUSE", "UNPAUSE", "BLOCK", "UNBLOCK",
+                "SOFT_REDUCTION", "SOFT_RECOVERY",
+            }
+            point.action_events = list(dict.fromkeys(
+                point.action_events + [
+                    event.audit_id for event in self._audit.get_all()
+                    if event.timestamp_simulated == step_boundary and event.action in action_names
+                ]
+            ))
+            serialized = point.model_dump()
+            serialized["sim_time"] = step_boundary.isoformat()
+            serialized["state"] = point.state.value
+            serialized["severity"] = point.severity.value
+            serialized["signal_breakdown"] = point.signal_breakdown.model_dump()
+            serialized["reason_codes"] = [code.value for code in point.reason_codes]
+            self._timeline.append(serialized)
 
     def _audit_codes(self, codes, timestamp, risk=None) -> None:
         for code in codes:
             self._audit.append(
                 timestamp, ActorType.SYSTEM, code.value, [code],
                 risk or RiskSnapshot(audience_risk=0.0, economic_risk=None),
+                config_version=self._machine.config_version,
             )
 
 

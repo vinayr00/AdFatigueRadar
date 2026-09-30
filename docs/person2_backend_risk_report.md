@@ -190,4 +190,40 @@ There is no authorized fixture under `replay/generated/` or `replay/scenarios/`,
 
 ### Closure verification
 
+## API integration readiness repair (2026-09-30)
+
+### Changes
+
+- Status now returns `CampaignStateMachine.config_version`; override revisions no longer appear as the base version.
+- Timeline points are generated from the actual `TickResult`, typed as `TimelinePoint`, and include signal breakdown, stale/anomaly state, reason codes, cooldown, effective config version, simulated time, state/severity, and action audit references. Existing `+00:00` timestamp serialization is preserved.
+- Added unauthenticated read-only `GET /campaigns/{campaign_id}/comments` for rolling-window comment/NLP fields. It omits raw and HMAC author identities and uses bounded `limit` pagination.
+- Added `GET /campaigns/{campaign_id}/thresholds` exposing effective configuration, version, mutable-key list, and safe bounds from the campaign state machine.
+- Replay-generated and operator-action audit events carry the effective configuration version at event time.
+
+### API regression tests
+
+`backend/tests/api/test_api.py` tests base and successive override versions across status, thresholds, timeline, and audit; populated timeline signals/state/action/audit references; healthy/watch/warning entries from real ticks; safe comment/NLP fields and inert JSON text; bounded comments and unknown campaigns; and effective-threshold GET values/bounds with secret exclusion. Suite size increased from 132 to 137 passing tests.
+
+### Audit persistence decision
+
+**PROCESS_LOCAL_AUDIT_PERSISTENCE_UNLESS_SPECIFIED.** The available master specification describes an append-only audit log and lists SQLite in its recommended technology stack, but does not explicitly require audit durability across process restarts or prescribe a durable audit mechanism. This repair preserves append-only in-process behavior and does not add a database layer.
+
+### Current integration limits
+
+- Timeline/audit configuration versions are historical event-time versions; status and threshold GET expose the current version.
+- Persistence/recovery override bounds remain **EXTERNAL_SPEC_INPUT_REQUIRED**. Real replay integration remains **REAL_REPLAY_FIXTURE_EXTERNAL_BLOCKER**. Git ownership history remains unavailable because project source files are untracked.
+
+### Final repair verification
+
+- `pytest backend/tests -q -p no:cacheprovider` — **137 passed, 0 failed**, 2 FastAPI lifecycle deprecation warnings.
+- `python scripts/check_config.py` — **PASS**, exit 0.
+- `python -m compileall backend scripts` — **PASS**.
+- No Person 1 or Person 3 paths were changed during this repair.
+
+### Integration classification
+
+**BACKEND READY FOR INTEGRATION.** The remaining safe-bound and real-replay inputs are external; they do not block the repaired Person 2 API contracts or unit/API verification. Current Git diff for this repair is limited to `backend/api/replay_runner.py`, `backend/api/routes_actions.py`, `backend/api/routes_campaigns.py`, `backend/api/routes_thresholds.py`, `backend/models/backend_models.py`, `backend/tests/api/test_api.py`, and this report. No out-of-scope path appears in the diff.
+
+### Closure verification
+
 Baseline and final focused test command: `pytest backend/tests -q -p no:cacheprovider` — 132 passed, 0 failed (2 FastAPI lifecycle deprecation warnings). `python scripts/check_config.py` — exit 0. `python -m compileall backend scripts` — exit 0. Git branch is `main`, but Git does not provide a usable tracked baseline for the project files. The ownership, safe-bound, and real-replay fixture limitations remain external blockers; Person 2 status remains **PARTIAL — EXTERNAL INPUT REQUIRED**.
