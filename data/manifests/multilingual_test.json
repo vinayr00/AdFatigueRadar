@@ -1,0 +1,29 @@
+{
+  "dataset_name": "AdFatigueRadar_multilingual_test",
+  "dataset_version": "real-world-v1.0",
+  "creation_timestamp": "2026-09-30T13:55:48.512279+00:00",
+  "split": "multilingual_test",
+  "record_count": 16,
+  "class_distribution": {
+    "fatigue": 2,
+    "product_complaint": 2,
+    "positive": 2,
+    "mockery": 2,
+    "neutral": 2,
+    "banter_meme": 2,
+    "spam": 2,
+    "service_complaint": 2
+  },
+  "language_distribution": {
+    "hinglish": 8,
+    "telugu_latin": 8
+  },
+  "source_provenance": {
+    "multilingual_social": 16
+  },
+  "preprocessing_version": "normalize_text_v1.0",
+  "pii_sanitization_version": "pii-sanitizer-v1.0",
+  "deduplication_version": "dedup-v1.0",
+  "annotation_guideline_version": "v2.0-real-world",
+  "leakage_guarantee": "0 exact and 0 near-duplicate matches across all 4 splits"
+}

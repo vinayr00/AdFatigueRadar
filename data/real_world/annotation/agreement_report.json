@@ -1,0 +1,112 @@
+{
+  "sample_count": 1461,
+  "taxonomy_agreement": {
+    "cohens_kappa": 0.9886,
+    "observed_agreement_po": 0.9904,
+    "confusion_matrix": {
+      "product_complaint": {
+        "product_complaint": 204,
+        "service_complaint": 0,
+        "fatigue": 0,
+        "mockery": 0,
+        "spam": 0,
+        "banter_meme": 0,
+        "neutral": 0,
+        "positive": 0
+      },
+      "service_complaint": {
+        "product_complaint": 0,
+        "service_complaint": 96,
+        "fatigue": 0,
+        "mockery": 0,
+        "spam": 0,
+        "banter_meme": 0,
+        "neutral": 0,
+        "positive": 0
+      },
+      "fatigue": {
+        "product_complaint": 0,
+        "service_complaint": 0,
+        "fatigue": 105,
+        "mockery": 0,
+        "spam": 0,
+        "banter_meme": 0,
+        "neutral": 0,
+        "positive": 0
+      },
+      "mockery": {
+        "product_complaint": 0,
+        "service_complaint": 0,
+        "fatigue": 0,
+        "mockery": 185,
+        "spam": 0,
+        "banter_meme": 14,
+        "neutral": 0,
+        "positive": 0
+      },
+      "spam": {
+        "product_complaint": 0,
+        "service_complaint": 0,
+        "fatigue": 0,
+        "mockery": 0,
+        "spam": 62,
+        "banter_meme": 0,
+        "neutral": 0,
+        "positive": 0
+      },
+      "banter_meme": {
+        "product_complaint": 0,
+        "service_complaint": 0,
+        "fatigue": 0,
+        "mockery": 0,
+        "spam": 0,
+        "banter_meme": 197,
+        "neutral": 0,
+        "positive": 0
+      },
+      "neutral": {
+        "product_complaint": 0,
+        "service_complaint": 0,
+        "fatigue": 0,
+        "mockery": 0,
+        "spam": 0,
+        "banter_meme": 0,
+        "neutral": 399,
+        "positive": 0
+      },
+      "positive": {
+        "product_complaint": 0,
+        "service_complaint": 0,
+        "fatigue": 0,
+        "mockery": 0,
+        "spam": 0,
+        "banter_meme": 0,
+        "neutral": 0,
+        "positive": 199
+      }
+    }
+  },
+  "sentiment_agreement": {
+    "cohens_kappa": 1.0,
+    "observed_agreement_po": 1.0,
+    "confusion_matrix": {
+      "positive": {
+        "positive": 199,
+        "neutral": 0,
+        "negative": 0
+      },
+      "neutral": {
+        "positive": 0,
+        "neutral": 596,
+        "negative": 0
+      },
+      "negative": {
+        "positive": 0,
+        "neutral": 0,
+        "negative": 666
+      }
+    }
+  },
+  "interpretation": "High agreement (Kappa > 0.85 indicates near-perfect consensus per Landis & Koch 1977)",
+  "timestamp_utc": "2026-09-30T14:34:05.959662+00:00"
+}

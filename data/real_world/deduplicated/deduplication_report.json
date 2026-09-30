@@ -1,0 +1,8 @@
+{
+  "initial_records": 176632,
+  "exact_duplicates_removed": 119926,
+  "near_duplicates_removed": 56,
+  "short_skipped": 760,
+  "retained_unique_records": 55890,
+  "timestamp_utc": "2026-09-30T14:34:01.746039+00:00"
+}

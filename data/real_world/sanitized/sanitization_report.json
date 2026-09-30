@@ -1,0 +1,12 @@
+{
+  "total_records_processed": 176632,
+  "pii_instances_scrubbed": {
+    "emails": 16,
+    "phones": 90,
+    "urls": 566,
+    "ips": 1,
+    "mentions": 451
+  },
+  "timestamp_utc": "2026-09-30T14:33:57.729188+00:00",
+  "hmac_author_anonymization": "SHA256 with isolated secret"
+}

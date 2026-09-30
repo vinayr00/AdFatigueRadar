@@ -1,0 +1,63 @@
+{
+  "dataset_name": "AdFatigueRadar_RealWorld_Corpus",
+  "created_at_utc": "2026-09-30T14:34:06.018185+00:00",
+  "total_adjudicated_samples": 1461,
+  "splits": {
+    "train": {
+      "count": 874,
+      "path": "data/real_world/train/train.jsonl",
+      "class_distribution": {
+        "service_complaint": 57,
+        "product_complaint": 122,
+        "neutral": 239,
+        "positive": 119,
+        "banter_meme": 118,
+        "mockery": 119,
+        "spam": 37,
+        "fatigue": 63
+      }
+    },
+    "validation": {
+      "count": 288,
+      "path": "data/real_world/validation/validation.jsonl",
+      "class_distribution": {
+        "positive": 39,
+        "banter_meme": 39,
+        "product_complaint": 40,
+        "fatigue": 21,
+        "mockery": 39,
+        "neutral": 79,
+        "service_complaint": 19,
+        "spam": 12
+      }
+    },
+    "test_held_out": {
+      "count": 299,
+      "path": "data/real_world/test/test.jsonl",
+      "class_distribution": {
+        "spam": 13,
+        "product_complaint": 42,
+        "positive": 41,
+        "mockery": 41,
+        "fatigue": 21,
+        "banter_meme": 40,
+        "neutral": 81,
+        "service_complaint": 20
+      },
+      "rule": "STRICTLY HELD OUT. NEVER USED FOR TRAINING OR MODEL TUNING."
+    },
+    "ood": {
+      "count": 50,
+      "path": "data/real_world/ood/ood.jsonl",
+      "class_distribution": {
+        "fatigue": 21,
+        "banter_meme": 29
+      }
+    }
+  },
+  "leakage_verification": {
+    "train_test_id_overlap": 0,
+    "train_test_text_overlap": 0,
+    "status": "VERIFIED_ZERO_LEAKAGE"
+  }
+}

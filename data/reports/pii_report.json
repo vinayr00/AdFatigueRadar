@@ -1,0 +1,24 @@
+{
+  "pii_sanitizer_version": "pii-sanitizer-v1.0",
+  "summary": {
+    "total_records_processed": 3060,
+    "records_with_pii": 1445,
+    "pii_detection_rate": 0.4722
+  },
+  "detections_by_category": {
+    "email": 360,
+    "phone": 380,
+    "url": 475,
+    "user_handle": 580,
+    "ip": 240,
+    "account_id": 0
+  },
+  "placeholders_used": {
+    "email": "[email]",
+    "phone": "[phone]",
+    "url": "[url]",
+    "user_handle": "[user]",
+    "ip": "[ip]",
+    "account_id": "[account_id]"
+  }
+}

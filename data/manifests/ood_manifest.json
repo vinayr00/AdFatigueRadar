@@ -1,0 +1,23 @@
+{
+  "dataset_name": "AdFatigueRadar_real_world_ood",
+  "dataset_version": "real-world-v1.0",
+  "split": "ood",
+  "source": "B2B Enterprise SaaS & Tech Developer Forums",
+  "time_range": "2026-Q1 to 2026-Q3",
+  "domain": "Enterprise Cloud / Developer Tooling / B2B Subscriptions",
+  "language_distribution": {
+    "en": 150
+  },
+  "reason_for_ood_classification": "Completely shifts domain from B2C consumer social advertising (Instagram/TikTok/YouTube) to B2B enterprise software and developer support discussions. Tests model generalization to professional technical complaints, enterprise API fatigue, and B2B webinar spam.",
+  "record_count": 150,
+  "class_distribution": {
+    "service_complaint": 3,
+    "product_complaint": 35,
+    "fatigue": 2,
+    "mockery": 2,
+    "spam": 35,
+    "banter_meme": 2,
+    "neutral": 35,
+    "positive": 36
+  }
+}

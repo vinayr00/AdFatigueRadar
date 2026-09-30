@@ -1,0 +1,24 @@
+experiment_id,model,preprocessing,features,train_size,validation_size,accuracy,macro_precision,macro_recall,macro_f1,weighted_f1,calibration_ece,brier_score,training_time,inference_latency,notes
+EXP_01_RETRAINED_BASELINE,RoBERTa-Dense + LogReg (C=1.0),NFKC + Whitespace (Variant B),768-dim Sentence Embeddings,874,288,0.6285,0.5871,0.5614,0.5699,0.6238,0.1458,0.4862,22.21,77.13,Direct retraining on 874 real-world training samples
+EXP_PREPROC_A,RoBERTa-Dense + LogReg (C=1.0),Raw Text (No NFKC),768-dim Embeddings,874,288,0.6354,0.5942,0.5678,0.5763,0.6302,0.1388,0.4814,19.25,66.84,Preprocessing variant A
+EXP_PREPROC_B,RoBERTa-Dense + LogReg (C=1.0),NFKC + Whitespace Normalization,768-dim Embeddings,874,288,0.6285,0.5871,0.5614,0.5699,0.6238,0.1458,0.4862,19.2,66.66,Preprocessing variant B
+EXP_PREPROC_C,RoBERTa-Dense + LogReg (C=1.0),NFKC + Explicit Emoji Preservation,768-dim Embeddings,874,288,0.6285,0.5871,0.5614,0.5699,0.6238,0.1458,0.4862,19.56,67.91,Preprocessing variant C
+EXP_PREPROC_D,RoBERTa-Dense + LogReg (C=1.0),PII Sanitization + NFKC Normalization,768-dim Embeddings,874,288,0.6354,0.5942,0.5678,0.5763,0.6302,0.1391,0.4808,19.13,66.41,Preprocessing variant D
+EXP_PREPROC_E,RoBERTa-Dense + LogReg (C=1.0),PII + NFKC + Repeated Char Truncation,768-dim Embeddings,874,288,0.6285,0.5817,0.5542,0.5624,0.6224,0.145,0.4853,18.99,65.95,Preprocessing variant E
+EXP_PREPROC_F,RoBERTa-Dense + LogReg (C=1.0),Social Media Lowercase + PII + NFKC,768-dim Embeddings,874,288,0.6424,0.5897,0.5624,0.5715,0.636,0.1414,0.5038,18.89,65.59,Preprocessing variant F
+EXP_MODEL_TFIDF_LR,TF-IDF (1-3 ngrams) + LogReg,Variant A,5000-dim Sparse TF-IDF,874,288,0.7188,0.8874,0.6304,0.6942,0.7187,0.2586,0.4785,0.42,0.15,Classic sparse baseline
+EXP_MODEL_TFIDF_SVM,TF-IDF (1-3 ngrams) + LinearSVC,Variant A,5000-dim Sparse TF-IDF,874,288,0.8194,0.8831,0.8031,0.8343,0.8241,0.0,0.0,0.35,0.12,Linear SVM on sparse n-grams
+EXP_MODEL_ROBERTA_SVM,RoBERTa-Dense + LinearSVC,Variant A,768-dim Embeddings,874,288,0.6146,0.5505,0.5483,0.5466,0.614,0.0,0.0,1.25,5.4,Max-margin linear head on dense RoBERTa representations
+EXP_FEAT_FUSED_SENT_BALANCED,RoBERTa-Dense + Sentiment Head (Fused 771-dim),Variant A,768-dim Embeddings + 3-dim Sentiment Posteriors,874,288,0.6319,0.5748,0.5777,0.5749,0.6327,0.1697,0.5114,1.85,6.2,Multi-signal fusion with balanced class weighting
+EXP_HP_C0.2_unweighted,"RoBERTa Fused Head (C=0.2, weight=None)",Variant A,771-dim Fused Embeddings,874,288,0.691,0.6866,0.62,0.6393,0.6824,0.063,0.4297,0.85,6.1,"Grid search C=0.2, class_weight=None"
+EXP_HP_C0.2_balanced,"RoBERTa Fused Head (C=0.2, weight=balanced)",Variant A,771-dim Fused Embeddings,874,288,0.6597,0.6062,0.625,0.6119,0.6616,0.0472,0.4414,0.85,6.1,"Grid search C=0.2, class_weight=balanced"
+EXP_HP_C0.5_unweighted,"RoBERTa Fused Head (C=0.5, weight=None)",Variant A,771-dim Fused Embeddings,874,288,0.6597,0.6237,0.5925,0.603,0.6541,0.0803,0.4537,0.85,6.1,"Grid search C=0.5, class_weight=None"
+EXP_HP_C0.5_balanced,"RoBERTa Fused Head (C=0.5, weight=balanced)",Variant A,771-dim Fused Embeddings,874,288,0.6667,0.6122,0.6297,0.6174,0.6674,0.0651,0.4585,0.85,6.1,"Grid search C=0.5, class_weight=balanced"
+EXP_HP_C1.0_unweighted,"RoBERTa Fused Head (C=1.0, weight=None)",Variant A,771-dim Fused Embeddings,874,288,0.6389,0.5962,0.5754,0.5824,0.636,0.1344,0.4818,0.85,6.1,"Grid search C=1.0, class_weight=None"
+EXP_HP_C1.0_balanced,"RoBERTa Fused Head (C=1.0, weight=balanced)",Variant A,771-dim Fused Embeddings,874,288,0.6528,0.5914,0.5985,0.5933,0.6525,0.1235,0.4829,0.85,6.1,"Grid search C=1.0, class_weight=balanced"
+EXP_HP_C2.0_unweighted,"RoBERTa Fused Head (C=2.0, weight=None)",Variant A,771-dim Fused Embeddings,874,288,0.6319,0.5892,0.5689,0.5758,0.6289,0.1701,0.512,0.85,6.1,"Grid search C=2.0, class_weight=None"
+EXP_HP_C2.0_balanced,"RoBERTa Fused Head (C=2.0, weight=balanced)",Variant A,771-dim Fused Embeddings,874,288,0.6319,0.5748,0.5777,0.5749,0.6327,0.1697,0.5114,0.85,6.1,"Grid search C=2.0, class_weight=balanced"
+EXP_HP_C3.0_unweighted,"RoBERTa Fused Head (C=3.0, weight=None)",Variant A,771-dim Fused Embeddings,874,288,0.6319,0.5892,0.5689,0.5758,0.6289,0.1838,0.5285,0.85,6.1,"Grid search C=3.0, class_weight=None"
+EXP_HP_C3.0_balanced,"RoBERTa Fused Head (C=3.0, weight=balanced)",Variant A,771-dim Fused Embeddings,874,288,0.6319,0.5757,0.5793,0.5758,0.6333,0.1795,0.528,0.85,6.1,"Grid search C=3.0, class_weight=balanced"
+EXP_HP_C5.0_unweighted,"RoBERTa Fused Head (C=5.0, weight=None)",Variant A,771-dim Fused Embeddings,874,288,0.6354,0.5904,0.5737,0.5792,0.6332,0.1951,0.5473,0.85,6.1,"Grid search C=5.0, class_weight=None"
+EXP_HP_C5.0_balanced,"RoBERTa Fused Head (C=5.0, weight=balanced)",Variant A,771-dim Fused Embeddings,874,288,0.6319,0.5667,0.5705,0.5674,0.6329,0.1956,0.5482,0.85,6.1,"Grid search C=5.0, class_weight=balanced"

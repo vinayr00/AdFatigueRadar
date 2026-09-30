@@ -1,0 +1,192 @@
+{
+  "double_annotated_count": 644,
+  "raw_agreement": 0.9705,
+  "cohens_kappa": 0.9661,
+  "chance_agreement_pe": 0.1298,
+  "interpretation": "Almost Perfect Agreement",
+  "disagreement_count": 19,
+  "per_class_agreement": {
+    "product_complaint": {
+      "annotator_a_count": 100,
+      "annotator_b_count": 97,
+      "agreed_count": 97,
+      "jaccard_agreement": 0.97
+    },
+    "service_complaint": {
+      "annotator_a_count": 62,
+      "annotator_b_count": 65,
+      "agreed_count": 62,
+      "jaccard_agreement": 0.9538
+    },
+    "fatigue": {
+      "annotator_a_count": 65,
+      "annotator_b_count": 57,
+      "agreed_count": 57,
+      "jaccard_agreement": 0.8769
+    },
+    "mockery": {
+      "annotator_a_count": 62,
+      "annotator_b_count": 69,
+      "agreed_count": 60,
+      "jaccard_agreement": 0.8451
+    },
+    "spam": {
+      "annotator_a_count": 93,
+      "annotator_b_count": 93,
+      "agreed_count": 93,
+      "jaccard_agreement": 1.0
+    },
+    "banter_meme": {
+      "annotator_a_count": 69,
+      "annotator_b_count": 69,
+      "agreed_count": 67,
+      "jaccard_agreement": 0.9437
+    },
+    "neutral": {
+      "annotator_a_count": 96,
+      "annotator_b_count": 101,
+      "agreed_count": 96,
+      "jaccard_agreement": 0.9505
+    },
+    "positive": {
+      "annotator_a_count": 97,
+      "annotator_b_count": 93,
+      "agreed_count": 93,
+      "jaccard_agreement": 0.9588
+    }
+  },
+  "confusion_matrix": {
+    "product_complaint": {
+      "product_complaint": 97,
+      "service_complaint": 3,
+      "fatigue": 0,
+      "mockery": 0,
+      "spam": 0,
+      "banter_meme": 0,
+      "neutral": 0,
+      "positive": 0
+    },
+    "service_complaint": {
+      "product_complaint": 0,
+      "service_complaint": 62,
+      "fatigue": 0,
+      "mockery": 0,
+      "spam": 0,
+      "banter_meme": 0,
+      "neutral": 0,
+      "positive": 0
+    },
+    "fatigue": {
+      "product_complaint": 0,
+      "service_complaint": 0,
+      "fatigue": 57,
+      "mockery": 7,
+      "spam": 0,
+      "banter_meme": 0,
+      "neutral": 1,
+      "positive": 0
+    },
+    "mockery": {
+      "product_complaint": 0,
+      "service_complaint": 0,
+      "fatigue": 0,
+      "mockery": 60,
+      "spam": 0,
+      "banter_meme": 2,
+      "neutral": 0,
+      "positive": 0
+    },
+    "spam": {
+      "product_complaint": 0,
+      "service_complaint": 0,
+      "fatigue": 0,
+      "mockery": 0,
+      "spam": 93,
+      "banter_meme": 0,
+      "neutral": 0,
+      "positive": 0
+    },
+    "banter_meme": {
+      "product_complaint": 0,
+      "service_complaint": 0,
+      "fatigue": 0,
+      "mockery": 2,
+      "spam": 0,
+      "banter_meme": 67,
+      "neutral": 0,
+      "positive": 0
+    },
+    "neutral": {
+      "product_complaint": 0,
+      "service_complaint": 0,
+      "fatigue": 0,
+      "mockery": 0,
+      "spam": 0,
+      "banter_meme": 0,
+      "neutral": 96,
+      "positive": 0
+    },
+    "positive": {
+      "product_complaint": 0,
+      "service_complaint": 0,
+      "fatigue": 0,
+      "mockery": 0,
+      "spam": 0,
+      "banter_meme": 0,
+      "neutral": 4,
+      "positive": 93
+    }
+  },
+  "sample_disagreements": [
+    {
+      "comment_id": "comm_rw_00001",
+      "annotator_a_label": "fatigue",
+      "annotator_b_label": "mockery"
+    },
+    {
+      "comment_id": "comm_rw_00021",
+      "annotator_a_label": "fatigue",
+      "annotator_b_label": "mockery"
+    },
+    {
+      "comment_id": "comm_rw_00046",
+      "annotator_a_label": "fatigue",
+      "annotator_b_label": "mockery"
+    },
+    {
+      "comment_id": "comm_rw_00101",
+      "annotator_a_label": "fatigue",
+      "annotator_b_label": "mockery"
+    },
+    {
+      "comment_id": "comm_rw_00166",
+      "annotator_a_label": "fatigue",
+      "annotator_b_label": "mockery"
+    },
+    {
+      "comment_id": "comm_rw_00221",
+      "annotator_a_label": "fatigue",
+      "annotator_b_label": "mockery"
+    },
+    {
+      "comment_id": "comm_rw_00726",
+      "annotator_a_label": "product_complaint",
+      "annotator_b_label": "service_complaint"
+    },
+    {
+      "comment_id": "comm_rw_00807",
+      "annotator_a_label": "product_complaint",
+      "annotator_b_label": "service_complaint"
+    },
+    {
+      "comment_id": "comm_rw_00848",
+      "annotator_a_label": "product_complaint",
+      "annotator_b_label": "service_complaint"
+    },
+    {
+      "comment_id": "comm_rw_00921",
+      "annotator_a_label": "banter_meme",
+      "annotator_b_label": "mockery"
+    }
+  ]
+}

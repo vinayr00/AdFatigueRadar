@@ -1,0 +1,639 @@
+{
+  "evaluation_type": "real_world_baseline",
+  "dataset": {
+    "path": "data/real_world/test/test.jsonl",
+    "sample_count": 299,
+    "dataset_version": "real-world-v1.0",
+    "hash": "82dacabc7b54812c"
+  },
+  "model": {
+    "artifact": "backend/nlp/artifacts/taxonomy_classifier.joblib",
+    "model_version": "adfatigue-nlp-v2.0",
+    "preprocessing_version": "preproc-v2.0",
+    "architecture": "Two-Stage: RoBERTa Sentiment (Twitter) + Dense Sentence-Transformers (768-dim) + Calibrated Logistic Regression"
+  },
+  "metrics": {
+    "accuracy": 0.2809,
+    "macro_precision": 0.3623,
+    "macro_recall": 0.2816,
+    "macro_f1": 0.2711,
+    "weighted_precision": 0.3687,
+    "weighted_recall": 0.2809,
+    "weighted_f1": 0.2685
+  },
+  "per_class": {
+    "product_complaint": {
+      "support": 42,
+      "precision": 0.3333,
+      "recall": 0.0952,
+      "f1": 0.1481,
+      "tp": 4,
+      "fp": 8,
+      "fn": 38
+    },
+    "service_complaint": {
+      "support": 20,
+      "precision": 0.25,
+      "recall": 0.15,
+      "f1": 0.1875,
+      "tp": 3,
+      "fp": 9,
+      "fn": 17
+    },
+    "fatigue": {
+      "support": 21,
+      "precision": 0.0667,
+      "recall": 0.1429,
+      "f1": 0.0909,
+      "tp": 3,
+      "fp": 42,
+      "fn": 18
+    },
+    "mockery": {
+      "support": 41,
+      "precision": 0.1546,
+      "recall": 0.3659,
+      "f1": 0.2174,
+      "tp": 15,
+      "fp": 82,
+      "fn": 26
+    },
+    "spam": {
+      "support": 13,
+      "precision": 0.75,
+      "recall": 0.2308,
+      "f1": 0.3529,
+      "tp": 3,
+      "fp": 1,
+      "fn": 10
+    },
+    "banter_meme": {
+      "support": 40,
+      "precision": 0.2931,
+      "recall": 0.425,
+      "f1": 0.3469,
+      "tp": 17,
+      "fp": 41,
+      "fn": 23
+    },
+    "neutral": {
+      "support": 81,
+      "precision": 0.4737,
+      "recall": 0.1111,
+      "f1": 0.18,
+      "tp": 9,
+      "fp": 10,
+      "fn": 72
+    },
+    "positive": {
+      "support": 41,
+      "precision": 0.5769,
+      "recall": 0.7317,
+      "f1": 0.6452,
+      "tp": 30,
+      "fp": 22,
+      "fn": 11
+    }
+  },
+  "confusion_matrix": {
+    "product_complaint": {
+      "product_complaint": 4,
+      "service_complaint": 3,
+      "fatigue": 5,
+      "mockery": 19,
+      "spam": 1,
+      "banter_meme": 5,
+      "neutral": 0,
+      "positive": 5
+    },
+    "service_complaint": {
+      "product_complaint": 0,
+      "service_complaint": 3,
+      "fatigue": 5,
+      "mockery": 8,
+      "spam": 0,
+      "banter_meme": 1,
+      "neutral": 1,
+      "positive": 2
+    },
+    "fatigue": {
+      "product_complaint": 0,
+      "service_complaint": 2,
+      "fatigue": 3,
+      "mockery": 8,
+      "spam": 0,
+      "banter_meme": 2,
+      "neutral": 0,
+      "positive": 6
+    },
+    "mockery": {
+      "product_complaint": 2,
+      "service_complaint": 0,
+      "fatigue": 4,
+      "mockery": 15,
+      "spam": 0,
+      "banter_meme": 18,
+      "neutral": 0,
+      "positive": 2
+    },
+    "spam": {
+      "product_complaint": 0,
+      "service_complaint": 1,
+      "fatigue": 1,
+      "mockery": 5,
+      "spam": 3,
+      "banter_meme": 0,
+      "neutral": 1,
+      "positive": 2
+    },
+    "banter_meme": {
+      "product_complaint": 1,
+      "service_complaint": 1,
+      "fatigue": 1,
+      "mockery": 13,
+      "spam": 0,
+      "banter_meme": 17,
+      "neutral": 5,
+      "positive": 2
+    },
+    "neutral": {
+      "product_complaint": 5,
+      "service_complaint": 2,
+      "fatigue": 25,
+      "mockery": 27,
+      "spam": 0,
+      "banter_meme": 10,
+      "neutral": 9,
+      "positive": 3
+    },
+    "positive": {
+      "product_complaint": 0,
+      "service_complaint": 0,
+      "fatigue": 1,
+      "mockery": 2,
+      "spam": 0,
+      "banter_meme": 5,
+      "neutral": 3,
+      "positive": 30
+    }
+  },
+  "error_analysis": {
+    "total_errors": 215,
+    "error_rate": 0.7191,
+    "top_confusions": {
+      "neutral -> mockery": 27,
+      "neutral -> fatigue": 25,
+      "product_complaint -> mockery": 19,
+      "mockery -> banter_meme": 18,
+      "banter_meme -> mockery": 13,
+      "neutral -> banter_meme": 10,
+      "fatigue -> mockery": 8,
+      "service_complaint -> mockery": 8,
+      "fatigue -> positive": 6,
+      "service_complaint -> fatigue": 5
+    },
+    "boundary_analysis": {
+      "product_vs_service": 3,
+      "fatigue_vs_mockery": 12,
+      "mockery_vs_banter": 31,
+      "spam_vs_banter": 0,
+      "neutral_vs_positive": 6
+    },
+    "high_confidence_errors_count": 81,
+    "high_confidence_errors": [
+      {
+        "comment_id": "rw_yt_003762",
+        "text": "Most of these politicians are to old to use apps and a mobile phone yet alone comprehend the world they currently live in. Thinking that they will understand A1 is like expecting a new born to solve and algebra equation. We need to stop voting these old useless politicians into office that are the reason the country is in shambles. They still living in the 1950s in their thought process.",
+        "true_label": "product_complaint",
+        "predicted_label": "mockery",
+        "confidence": 0.9741
+      },
+      {
+        "comment_id": "rw_rd_005915",
+        "text": "MJ lmao",
+        "true_label": "mockery",
+        "predicted_label": "banter_meme",
+        "confidence": 1.0
+      },
+      {
+        "comment_id": "rw_yt_028075",
+        "text": "I really liked this series really u all killed it bro This shit is really owsm\ud83d\ude0e\ud83d\ude0e\ud83d\ude0e\ud83e\udd18\ud83c\udffb\ud83e\udd18\ud83c\udffb\ud83e\udd18\ud83c\udffb\ud83e\udd18\ud83c\udffb",
+        "true_label": "banter_meme",
+        "predicted_label": "positive",
+        "confidence": 0.9943
+      },
+      {
+        "comment_id": "rw_yt_027271",
+        "text": "If you have pasta, yeah right. And this is definitely not fast. And who adds heavy cream to tomato paste. Useless",
+        "true_label": "product_complaint",
+        "predicted_label": "mockery",
+        "confidence": 0.8884
+      },
+      {
+        "comment_id": "rw_yt_025883",
+        "text": "Lex, i'm concerned your pain tolerance has been falling over the years of making these videos. every video is the worst pain lol",
+        "true_label": "fatigue",
+        "predicted_label": "mockery",
+        "confidence": 0.864
+      },
+      {
+        "comment_id": "rw_yt_152542",
+        "text": "Elon musk: it\u2019ll do the kinds of jobs humans don\u2019t want to do....wtf? Um, jobs like ensuring everyone has clean water or cleaning up the opioid crisis or stopping the slaughtering of our rainforests? We humans still seem to the ones doing shitty jobs like working in factories (probably making the fekking parts for these useless bots). We\u2019re the ones still picking up garbage that we so easily create, for what? To feed the robots?!",
+        "true_label": "product_complaint",
+        "predicted_label": "mockery",
+        "confidence": 0.9993
+      },
+      {
+        "comment_id": "rw_yt_003288",
+        "text": "FEARMONGERS! The government and the media are all about fearing people into submission! Every time Hollywood makes a gloom and doom movie, Washington D.C. does its best to make it come true!",
+        "true_label": "fatigue",
+        "predicted_label": "mockery",
+        "confidence": 0.9992
+      },
+      {
+        "comment_id": "rw_yt_013255",
+        "text": "Soo many FAA rules broken in one video... i love it!!",
+        "true_label": "product_complaint",
+        "predicted_label": "banter_meme",
+        "confidence": 0.921
+      },
+      {
+        "comment_id": "rw_rd_000292",
+        "text": "I don't get how companies with some of the most advanced tech have some of the most idiotic CEOs? he sounds like a 14 year old edge lord on 4chan",
+        "true_label": "neutral",
+        "predicted_label": "mockery",
+        "confidence": 0.9812
+      },
+      {
+        "comment_id": "rw_rd_001755",
+        "text": "\"Safety limits\" LOL. The Pandora's box is open. I will just wait for some AI to include random bits of its code into the code people ask them to create (especially in apps that will give it an edge on autonomy, like Decentralized Blockchain projects), and then launch itself from some background process that's hardcoded as a zeroday from at first glance harmless coding inefficiencies. There will be no way of detecting or stoping it. Damn, it could even code itself into existing crypto smart contracts, or just create a fake developer persona on GitHub, and start helping some random project, and injecting its stuff there, to activate in 5 years when the project is widely adopted...",
+        "true_label": "spam",
+        "predicted_label": "mockery",
+        "confidence": 0.88
+      }
+    ],
+    "low_confidence_correct_count": 13,
+    "low_confidence_correct": [
+      {
+        "comment_id": "rw_rd_000309",
+        "text": "Hustler-bros and crypto/nft-bros please line up , there is a new gig in town",
+        "label": "spam",
+        "confidence": 0.4492
+      },
+      {
+        "comment_id": "rw_rd_000320",
+        "text": "\\*eyeroll emoji\\* He says this as they introduce the paid plan... Even ChatGPT itself will tell you that it's important to remember they're a paid company, and that, additionally, their architecture is not fully \"open\". Some of it is; some of it isn't. And even the open stuff has a lot of requirements.",
+        "label": "neutral",
+        "confidence": 0.4001
+      },
+      {
+        "comment_id": "rw_yt_025150",
+        "text": "I dont like this design of miku but anyways I still appreciate the effort deco puts in every video",
+        "label": "fatigue",
+        "confidence": 0.5887
+      },
+      {
+        "comment_id": "rw_yt_028460",
+        "text": "20 tarikh!!!!!!!!!!! are fucking kidding me????? I'll get old waiting for this mann.. Aur episodes bhi itne chhote-chhote..But the fact is I love this series..<3",
+        "label": "positive",
+        "confidence": 0.4681
+      },
+      {
+        "comment_id": "rw_rd_006696",
+        "text": "Accurate until they portray Joe Biden as a serious leader who makes policy decisions lmao",
+        "label": "mockery",
+        "confidence": 0.5846
+      }
+    ]
+  },
+  "ood": {
+    "accuracy": 0.3,
+    "macro_precision": 0.2009,
+    "macro_recall": 0.0696,
+    "macro_f1": 0.0998,
+    "weighted_precision": 0.8121,
+    "weighted_recall": 0.3,
+    "weighted_f1": 0.4245,
+    "per_class": {
+      "product_complaint": {
+        "support": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 1,
+        "fn": 0
+      },
+      "service_complaint": {
+        "support": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 2,
+        "fn": 0
+      },
+      "fatigue": {
+        "support": 21,
+        "precision": 0.75,
+        "recall": 0.1429,
+        "f1": 0.24,
+        "tp": 3,
+        "fp": 1,
+        "fn": 18
+      },
+      "mockery": {
+        "support": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 18,
+        "fn": 0
+      },
+      "spam": {
+        "support": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 0,
+        "fn": 0
+      },
+      "banter_meme": {
+        "support": 29,
+        "precision": 0.8571,
+        "recall": 0.4138,
+        "f1": 0.5581,
+        "tp": 12,
+        "fp": 2,
+        "fn": 17
+      },
+      "neutral": {
+        "support": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 3,
+        "fn": 0
+      },
+      "positive": {
+        "support": 0,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "tp": 0,
+        "fp": 8,
+        "fn": 0
+      }
+    },
+    "confusion_matrix": {
+      "product_complaint": {
+        "product_complaint": 0,
+        "service_complaint": 0,
+        "fatigue": 0,
+        "mockery": 0,
+        "spam": 0,
+        "banter_meme": 0,
+        "neutral": 0,
+        "positive": 0
+      },
+      "service_complaint": {
+        "product_complaint": 0,
+        "service_complaint": 0,
+        "fatigue": 0,
+        "mockery": 0,
+        "spam": 0,
+        "banter_meme": 0,
+        "neutral": 0,
+        "positive": 0
+      },
+      "fatigue": {
+        "product_complaint": 0,
+        "service_complaint": 2,
+        "fatigue": 3,
+        "mockery": 8,
+        "spam": 0,
+        "banter_meme": 2,
+        "neutral": 0,
+        "positive": 6
+      },
+      "mockery": {
+        "product_complaint": 0,
+        "service_complaint": 0,
+        "fatigue": 0,
+        "mockery": 0,
+        "spam": 0,
+        "banter_meme": 0,
+        "neutral": 0,
+        "positive": 0
+      },
+      "spam": {
+        "product_complaint": 0,
+        "service_complaint": 0,
+        "fatigue": 0,
+        "mockery": 0,
+        "spam": 0,
+        "banter_meme": 0,
+        "neutral": 0,
+        "positive": 0
+      },
+      "banter_meme": {
+        "product_complaint": 1,
+        "service_complaint": 0,
+        "fatigue": 1,
+        "mockery": 10,
+        "spam": 0,
+        "banter_meme": 12,
+        "neutral": 3,
+        "positive": 2
+      },
+      "neutral": {
+        "product_complaint": 0,
+        "service_complaint": 0,
+        "fatigue": 0,
+        "mockery": 0,
+        "spam": 0,
+        "banter_meme": 0,
+        "neutral": 0,
+        "positive": 0
+      },
+      "positive": {
+        "product_complaint": 0,
+        "service_complaint": 0,
+        "fatigue": 0,
+        "mockery": 0,
+        "spam": 0,
+        "banter_meme": 0,
+        "neutral": 0,
+        "positive": 0
+      }
+    }
+  },
+  "multilingual": {
+    "accuracy": 0.8125,
+    "macro_precision": 0.8958,
+    "macro_recall": 0.8125,
+    "macro_f1": 0.8083,
+    "weighted_precision": 0.8958,
+    "weighted_recall": 0.8125,
+    "weighted_f1": 0.8083,
+    "per_class": {
+      "product_complaint": {
+        "support": 2,
+        "precision": 1.0,
+        "recall": 0.5,
+        "f1": 0.6667,
+        "tp": 1,
+        "fp": 0,
+        "fn": 1
+      },
+      "service_complaint": {
+        "support": 2,
+        "precision": 1.0,
+        "recall": 0.5,
+        "f1": 0.6667,
+        "tp": 1,
+        "fp": 0,
+        "fn": 1
+      },
+      "fatigue": {
+        "support": 2,
+        "precision": 1.0,
+        "recall": 0.5,
+        "f1": 0.6667,
+        "tp": 1,
+        "fp": 0,
+        "fn": 1
+      },
+      "mockery": {
+        "support": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "spam": {
+        "support": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      },
+      "banter_meme": {
+        "support": 2,
+        "precision": 0.6667,
+        "recall": 1.0,
+        "f1": 0.8,
+        "tp": 2,
+        "fp": 1,
+        "fn": 0
+      },
+      "neutral": {
+        "support": 2,
+        "precision": 0.5,
+        "recall": 1.0,
+        "f1": 0.6667,
+        "tp": 2,
+        "fp": 2,
+        "fn": 0
+      },
+      "positive": {
+        "support": 2,
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "tp": 2,
+        "fp": 0,
+        "fn": 0
+      }
+    },
+    "confusion_matrix": {
+      "product_complaint": {
+        "product_complaint": 1,
+        "service_complaint": 0,
+        "fatigue": 0,
+        "mockery": 0,
+        "spam": 0,
+        "banter_meme": 0,
+        "neutral": 1,
+        "positive": 0
+      },
+      "service_complaint": {
+        "product_complaint": 0,
+        "service_complaint": 1,
+        "fatigue": 0,
+        "mockery": 0,
+        "spam": 0,
+        "banter_meme": 0,
+        "neutral": 1,
+        "positive": 0
+      },
+      "fatigue": {
+        "product_complaint": 0,
+        "service_complaint": 0,
+        "fatigue": 1,
+        "mockery": 0,
+        "spam": 0,
+        "banter_meme": 1,
+        "neutral": 0,
+        "positive": 0
+      },
+      "mockery": {
+        "product_complaint": 0,
+        "service_complaint": 0,
+        "fatigue": 0,
+        "mockery": 2,
+        "spam": 0,
+        "banter_meme": 0,
+        "neutral": 0,
+        "positive": 0
+      },
+      "spam": {
+        "product_complaint": 0,
+        "service_complaint": 0,
+        "fatigue": 0,
+        "mockery": 0,
+        "spam": 2,
+        "banter_meme": 0,
+        "neutral": 0,
+        "positive": 0
+      },
+      "banter_meme": {
+        "product_complaint": 0,
+        "service_complaint": 0,
+        "fatigue": 0,
+        "mockery": 0,
+        "spam": 0,
+        "banter_meme": 2,
+        "neutral": 0,
+        "positive": 0
+      },
+      "neutral": {
+        "product_complaint": 0,
+        "service_complaint": 0,
+        "fatigue": 0,
+        "mockery": 0,
+        "spam": 0,
+        "banter_meme": 0,
+        "neutral": 2,
+        "positive": 0
+      },
+      "positive": {
+        "product_complaint": 0,
+        "service_complaint": 0,
+        "fatigue": 0,
+        "mockery": 0,
+        "spam": 0,
+        "banter_meme": 0,
+        "neutral": 0,
+        "positive": 2
+      }
+    }
+  }
+}
