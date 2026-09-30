@@ -52,7 +52,14 @@ def test_no_datetime_now_in_risk_or_actions() -> None:
 
 def test_no_backend_nlp_import() -> None:
     """No backend.nlp import anywhere in Person 2 modules."""
-    files = _collect_py_files(ALL_BACKEND)
+    person_2_paths = [
+        RISK_PATH,
+        ACTIONS_PATH,
+        REPO_ROOT / "backend" / "models",
+        REPO_ROOT / "backend" / "replay",
+        REPO_ROOT / "backend" / "routes",
+    ]
+    files = _collect_py_files(*person_2_paths)
     violations = []
     for f in files:
         tree = ast.parse(f.read_text(encoding="utf-8"), filename=str(f))
@@ -63,7 +70,7 @@ def test_no_backend_nlp_import() -> None:
             elif isinstance(node, ast.ImportFrom) and node.module and (node.module == "backend.nlp" or node.module.startswith("backend.nlp.")):
                 violations.append(f"{f.relative_to(REPO_ROOT)}:{node.lineno}")
 
-    assert not violations, "backend.nlp imports found in:\n" + "\n".join(violations)
+    assert not violations, "backend.nlp imports found in Person 2 modules:\n" + "\n".join(violations)
 
 
 def test_no_hardcoded_numeric_thresholds_in_risk() -> None:
