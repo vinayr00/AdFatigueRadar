@@ -1,0 +1,71 @@
+{
+  "manifest_version": "v5.0.0-FINAL-E2E",
+  "generated_at_utc": "2026-09-30T16:22:00+00:00",
+  "model_name": "AdFatigueRadar Multi-Signal Taxonomy Classifier",
+  "model_version": "adfatigue-nlp-v2.0",
+  "preprocessing_version": "variant-a-v2.0",
+  "git_commit": "dbf6b4206f4c99dec3b8324bdcbc28ad75c926d0",
+  "git_branch": "NlpPipeline",
+  "environment": {
+    "python": "3.12.3",
+    "pytorch": "2.7.1+cu118",
+    "cuda": "11.8",
+    "transformers": "4.40.0",
+    "scikit_learn": "1.5.1",
+    "fastapi": "0.111.0",
+    "pydantic": "2.13.4"
+  },
+  "artifacts": [
+    {
+      "path": "backend/nlp/artifacts/phase3_final_model.joblib",
+      "sha256": "3e4b8fdbc39394ead9b1b8161c3afe5f5001114e2ee848c519523da0151dbee1",
+      "purpose": "Logistic Regression multi-signal classification head"
+    },
+    {
+      "path": "backend/nlp/artifacts/phase3_temperature_scaler.json",
+      "sha256": "c75a6fbf7fa347e044705a95b8a7e9300510574478e91e7c5b5058dc38481fd6",
+      "purpose": "Calibrated temperature scaling parameter (T=1.0494)"
+    },
+    {
+      "path": "backend/nlp/artifacts/phase3_class_mapping.json",
+      "sha256": "b17644c5243b0bd8d1e0e8e20572bfc06231caf1791b845867bd057fe9d9a847",
+      "purpose": "8-class taxonomy mapping dictionary"
+    },
+    {
+      "path": "backend/nlp/artifacts/phase3_config.json",
+      "sha256": "c1b059c2bc3b251e3afc603e376a21bfa6816824c2a1972b7aa13b7aa27ab5fb",
+      "purpose": "Pipeline hyperparameter, embedding, and threshold specifications"
+    },
+    {
+      "path": "backend/nlp/artifacts/taxonomy_model.joblib",
+      "sha256": "64191b728eb7f9c2866bd9a622740ae2f12140070759ee9c14dffa634f25c4d6",
+      "purpose": "Phase 0 baseline model artifact"
+    }
+  ],
+  "datasets": [
+    {
+      "split": "train",
+      "path": "data/real_world/train/train.jsonl",
+      "record_count": 874,
+      "sha256": "21a36aa9d6b9d628469adabffb8118022d4f2081a9544be4efaa3b4dbf4fa4ec"
+    },
+    {
+      "split": "validation",
+      "path": "data/real_world/validation/validation.jsonl",
+      "record_count": 288,
+      "sha256": "8d328320b306b3e89643ca754659b9aef44a1eb40578aa6c466480b07044036e"
+    },
+    {
+      "split": "test",
+      "path": "data/real_world/test/test.jsonl",
+      "record_count": 299,
+      "sha256": "82dacabc48ba6d5ae57df9b647d6928e1d743a6d45f4f46a297920786cfba7e9"
+    },
+    {
+      "split": "ood",
+      "path": "data/real_world/ood/ood.jsonl",
+      "record_count": 50,
+      "sha256": "b06ae21e42c2356cb6d2fb5d2b781e62688001e79bc4fa5f80b91040854fa16b"
+    }
+  ]
+}
