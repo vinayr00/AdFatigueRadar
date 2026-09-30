@@ -1,0 +1,23 @@
+{
+  "candidate_id": "PHASE3_FINAL_FUSED_ROBERTA_LR",
+  "selected_at_utc": "2026-09-30T15:25:45.095713+00:00",
+  "architecture": "Two-Stage Multi-Signal: RoBERTa Embeddings (768-dim) + RoBERTa Sentiment Posteriors (3-dim) + Calibrated Logistic Regression",
+  "preprocessing": "Variant A (PII Sanitization + NFKC Normalization)",
+  "hyperparameters": {
+    "C": 0.2,
+    "class_weight": null
+  },
+  "calibration": {
+    "method": "Temperature Scaling (NLL optimized on Validation logits)",
+    "temperature": 1.0494,
+    "val_ece": 0.0568,
+    "val_brier_score": 0.4299
+  },
+  "critical_complaint_threshold": 0.5,
+  "validation_metrics": {
+    "accuracy": 0.691,
+    "macro_f1": 0.6393,
+    "weighted_f1": 0.6824
+  },
+  "selection_rationale": "Highest validation Macro-F1 with lowest ECE calibration error and balanced precision across harmful complaint classes"
+}
