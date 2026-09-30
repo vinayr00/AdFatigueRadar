@@ -1,0 +1,3 @@
+"""
+AdFatigueRadar Tests Package
+"""

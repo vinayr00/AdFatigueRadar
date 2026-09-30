@@ -1,0 +1,18 @@
+{
+  "dataset_name": "AdFatigueRadar Training Corpus",
+  "total_samples": 80,
+  "version": "v1.0",
+  "categories": {
+    "spam": 10,
+    "fatigue": 10,
+    "service_complaint": 10,
+    "mockery": 10,
+    "product_complaint": 10,
+    "neutral": 10,
+    "positive": 10,
+    "banter_meme": 10
+  },
+  "preprocessing_version": "preproc-v1.0",
+  "disjoint_from_test": true,
+  "disjoint_from_replay": true
+}

@@ -1,0 +1,336 @@
+AdFatigueRadar — PERSON 3Replay / Frontend / Integration Execution Specification
+Isolated parallel-work package • P0 first • P1/P2 extensions
+1. Mission and Boundary
+Person 3 owns the deterministic replay environment, potential-world telemetry/comment generation, frontend dashboard, replay controls, and integration glue required to connect the frozen contracts. Person 3 does not own NLP model internals, risk formulas, state transitions, or runtime action execution.
+P0 outcome: a deterministic 3-day replay that visibly exercises the complete guard loop.
+P0 outcome: dashboard showing campaign health, risk, evidence, timeline, actions, and replay controls.
+P0 outcome: potential-world curves that allow protected vs no-action comparisons using identical seeds.
+P1 outcome: ROAS/baseline/lag visualizations and protected-vs-no-action comparison UI.
+P2 outcome: advanced operator controls and optional presentation polish.
+Replay must generate conditions; it must not pre-bake the final action/state outcome.
+2. Non-Negotiable Isolation Rules
+Person 3 may modify replay/, frontend/, and integration-owned test files only.
+Person 3 owns replay/schemas/, replay/scenarios/, replay/generated/, and frontend/src/.
+Person 3 must NOT edit backend/nlp/.
+Person 3 must NOT edit backend/risk/.
+Person 3 must NOT edit backend/actions/.
+Person 3 must NOT edit config/thresholds.yaml.
+Person 3 must NOT modify scripts/check_config.py.
+Person 3 must NOT tune the risk engine to make the demo trigger.
+Person 3 must NOT hard-code WARNING, SOFT_REDUCED, or PAUSED into replay outcomes.
+Person 3 must NOT create a second economic/action simulator. Person 2 owns the shared runtime ActionSimulation interface.
+Person 3 may generate potential-world curves; Person 2 applies campaign actions to those curves at runtime.
+Do not modify another person's files merely to resolve a merge conflict; report it.
+Do not change frozen contracts without a documented team-approved contract change.
+3. Exact File Ownership
+replay/├── schemas/│   ├── comment_event.schema.json│   ├── telemetry_event.schema.json│   ├── nlp_result.schema.json│   ├── action_result.schema.json│   ├── audit_event.schema.json│   └── replay_record.schema.json├── scenarios/│   ├── generator.py│   ├── scenario_config.py│   ├── potential_world.py│   ├── controls.py│   └── README.md└── generated/    ├── README.md    └── *.jsonlfrontend/└── src/    ├── components/    ├── pages/    ├── hooks/    ├── api/    ├── types/    └── styles/backend/tests/integration/└── test_replay_frontend_contracts.pydocs/└── person3_replay_frontend_report.md
+If equivalent files already exist, extend them rather than creating duplicate implementations.
+4. Read-Only Inputs from Other Owners
+backend/nlp/* — Person 1
+backend/risk/* — Person 2
+backend/actions/* — Person 2
+config/thresholds.yaml — Person 2
+scripts/check_config.py — Person 2
+5. Frozen CommentEvent Contract
+{  "event_id": "comment_0001",  "timestamp": "2026-09-30T12:00:00Z",  "campaign_id": "campaign_01",  "ad_id": "ad_07",  "author_id": "author_184",  "text": "Bro this ad again 😂",  "reactions": 12,  "replies": 3}
+Replay comments must be newly authored for this project.
+Replay comments must be disjoint from Person 1's training and human-audited test data.
+Do not copy benchmark/test comments into replay scenarios.
+6. Frozen TelemetryEvent Contract
+{  "event_id": "telemetry_0001",  "timestamp": "2026-09-30T12:00:00Z",  "campaign_id": "campaign_01",  "ad_id": "ad_07",  "spend": 4500,  "impressions": 52000,  "reach": 36000,  "clicks": 4200,  "conversions": 190,  "cpm": 86.54,  "cpc": 1.07,  "cpa": 23.68,  "roas": 3.8}
+Telemetry must be derived from the potential-world curves and runtime campaign state.
+Do not directly emit the desired risk/state as telemetry.
+7. ReplayRecord Contract
+{  "record_type": "comment_event | telemetry_potential_event",  "timestamp_simulated": "2026-09-30T12:00:00Z",  "campaign_id": "campaign_01",  "ad_id": "ad_07",  "payload": {}}
+The replay stream is ordered by simulated timestamp.
+Use five-minute telemetry steps.
+Comments may arrive more frequently than telemetry.
+8. P0 Replay Architecture
+The replay has two layers:
+Scenario generator — creates potential-world curves and comment streams.
+Runtime simulator — applies current campaign state/actions to the potential world and emits observed telemetry.
+Person 3 owns layer 1.
+Person 2 owns the shared runtime ActionSimulation behavior in layer 2.
+Do not duplicate layer 2 inside replay/scenarios/.
+9. Required Three-Day Replay
+Duration: 72 simulated hours.
+Compute step: 5 minutes.
+Guard window: 60 minutes.
+Starting comment rate: approximately 2/minute.
+Healthy/lull comment rate: approximately 0.4/minute.
+Stress comment rate: approximately 8/minute.
+Healthy phase: hours 0–18.
+Early fatigue: hours 18–36.
+Acceleration: hours 36–52.
+Economic degradation: hours 52–72.
+Potential-world telemetry must continue to exist independently of action state.
+Telemetry must be plausible and internally consistent, but these values are demo parameters—not real-world claims.
+10. Potential-World Curves
+Generate deterministic curves for:
+potential impressions / volume
+potential CPM
+potential CTR
+potential conversion rate
+potential comment intensity
+potential comment category mix
+optional reach
+optional frequency
+Every scenario must have an explicit seed.
+The same seed must produce the same potential-world curves.
+Protected and no-action runs must start from identical potential-world curves.
+Action state changes observed volume, spend, and conversions; it must not rewrite the underlying potential world.
+11. Action-Responsive Replay
+ACTIVE:  observed_volume = potential_volumeSOFT_REDUCED:  observed_volume = potential_volume × 0.80PAUSED:  observed_new_volume = 0  observed_new_spend = 0  emit zero-volume heartbeat telemetry every 5 minutes
+Person 3 does not implement a competing action multiplier.
+Person 2's ActionSimulation is the authority for runtime action application.
+12. CPA / Conversion Handling
+Compute rolling-hour ratios from sums.
+CPA = spend / conversions when conversions > 0.
+CPA = null when conversions = 0.
+Never emit infinity for CPA.
+Economic risk is N/A below 20 conversions in the rolling hour.
+Do not manufacture conversions simply to make Path A pause.
+13. Scenario Design Requirements
+13.1 Healthy
+Stable sentiment/category mix.
+Healthy CTR/frequency.
+Stable economic metrics.
+No action should occur.
+13.2 Early Fatigue
+Increase fatigue/mild mockery categories gradually.
+Sentiment decay should begin before economic degradation.
+Audience risk may reach WARNING before economic confirmation.
+13.3 Acceleration
+Increase comment acceleration and harmful weighted share.
+Increase frequency and/or CTR decay.
+The scenario must allow SOFT_REDUCED to occur naturally from the risk engine.
+13.4 Economic Degradation
+Degrade CPA/CPM/ROAS/conversion-rate potential curves.
+The scenario should permit Path A pause after the configured evidence/persistence gates.
+Do not hard-code a pause event.
+14. Lead-Time Requirement
+The project target is detection of negative sentiment acceleration before significant CPA degradation. The demo scenario is designed so economic degradation begins at hour 52. Tuning must verify whether WARNING occurs before hour 28. Do not claim a 24-hour lead until held-out reporting seeds demonstrate it.
+Person 3 owns scenario generation/tuning mechanics.
+Person 2 owns the measured lead-time analysis and final risk-gate interpretation.
+Do not tune reporting seeds to guarantee the target.
+15. Negative-Control Scenarios
+15.1 CPM-Only Negative Control
+Increase CPM materially while keeping audience-risk evidence below pause conditions.
+Expected behavior: no combined pause.
+Use this to show that CPM alone is not sufficient.
+15.2 Banter Storm
+Generate high-volume banter/meme comments.
+Keep economics stable.
+Category should remain banter_meme where appropriate.
+Expected behavior: combined guard must not pause.
+Sentiment-only baseline may false-positive; this is intentional for the baseline comparison.
+16. Deterministic Replay Controls
+Start.
+Pause/stop if supported.
+Reset.
+Speed control.
+Seed display.
+Current simulated timestamp.
+Scenario name.
+Replay state.
+Do not change risk thresholds from the replay UI in P0.
+17. Replay API Integration
+Consume the backend replay endpoints:
+POST /campaigns/{campaign_id}/replay/start?speed={speed}
+POST /campaigns/{campaign_id}/replay/reset
+GET /campaigns/{campaign_id}/stream
+The backend remains authoritative for campaign state, risk, action, and audit results.
+18. Frontend P0 Dashboard
+The main screen must prioritize operational information rather than decorative charts.
+Campaign/ad identity and current state
+Severity
+Audience risk
+Economic risk
+Harmful ratio + Wilson lower bound
+Sentiment decay
+Fatigue/mockery
+Comment acceleration
+CTR/frequency signals
+Critical complaint rate
+CPA
+CPM
+ROAS
+Conversion count/rate
+Current replay time/speed
+Main event timeline
+Action/state history
+Audit trail
+Replay start/reset/speed controls
+19. Frontend State Rules
+Display backend state as the source of truth.
+Do not infer PAUSED from a frontend timer or local state.
+Display economic risk as N/A when backend reports insufficient conversions.
+Display CPA as — or equivalent null representation when no conversions exist.
+Do not render raw HTML from comments.
+Escape comment text using the framework's normal safe rendering.
+Do not expose API keys, provider secrets, HMAC secrets, or server environment values.
+If the backend reports stale data, display it clearly rather than silently treating it as fresh.
+20. Frontend Components
+frontend/src/├── api/│   ├── campaigns.ts│   ├── replay.ts│   └── audit.ts├── types/│   └── contracts.ts├── components/│   ├── CampaignHeader.tsx│   ├── RiskCards.tsx│   ├── EvidencePanel.tsx│   ├── KPIGrid.tsx│   ├── Timeline.tsx│   ├── ActionHistory.tsx│   ├── AuditPanel.tsx│   └── ReplayControls.tsx├── pages/│   └── Dashboard.tsx└── hooks/    ├── useCampaignStatus.ts    ├── useCampaignStream.ts    └── useReplay.ts
+Names are organizational guidance; reuse existing project structure when present.
+21. Main Timeline
+The timeline should show events in chronological order:
+healthy baseline
+fatigue onset
+WARNING
+acceleration
+SOFT_REDUCED
+economic degradation
+PAUSE
+readback verified
+audit record
+recovery/operator action where applicable
+The timeline must be generated from backend events rather than hard-coded frontend labels.
+22. P1 Frontend Extensions
+ROAS trend chart.
+Raw CPA baseline comparison.
+Smoothed CPA/CPM baseline comparison.
+Sentiment-only baseline comparison.
+Lag diagnostics.
+Measured lead-time distribution.
+Protected vs no-action economic comparison.
+Threshold display/editor using backend validation rather than local validation only.
+Slack/webhook status display if the backend exposes it.
+23. Economic Comparison UI
+excess_cost_avoided =    no_action_excess_cost - protected_excess_costconversions_forgone =    max(0, no_action_conversions - protected_conversions)tradeoff =    excess_cost_avoided / max(1, conversions_forgone)
+Do not label excess cost avoided as raw 'savings'.
+Show action timing.
+Show conversions forgone.
+Show the shared seed/scenario identity.
+Make clear that protected and no-action runs share identical potential-world curves.
+24. P2 Frontend / Operator Controls
+Advanced override controls only if backend supports them.
+Explicit BLOCKED-state presentation.
+Advanced replay comparison controls.
+Additional benchmark visualizations.
+Do not implement backend decision logic in the frontend.
+25. Integration Test Strategy
+Replay schema validation.
+Deterministic same-seed output.
+Different-seed output differs.
+Replay comments are disjoint from train/test manifests.
+Potential-world curves remain identical across protected/no-action runs.
+ACTIVE volume matches potential volume.
+SOFT_REDUCED uses the backend action multiplier.
+PAUSED emits zero-volume heartbeats.
+CPA null behavior is displayed correctly.
+Economic risk N/A is displayed correctly.
+Backend state transitions appear correctly on the timeline.
+Readback/audit events render correctly.
+Comment text is safely escaped.
+API errors are surfaced without exposing secrets.
+26. Demo Sequence
+Start healthy replay.
+Show stable audience/economic signals.
+Enter early fatigue.
+Show WARNING before economic degradation when measured.
+Enter acceleration.
+Show SOFT_REDUCED and the runtime volume response.
+Allow economic degradation.
+Show PAUSE through backend guard logic.
+Show readback verification and audit event.
+Run protected vs no-action comparison.
+Run CPM-only negative control.
+Run banter-storm negative control.
+Show sentiment-only baseline behavior.
+Show measured lead-time distribution if P1 is complete.
+The frontend must visualize what the backend actually decided. It must never fake the sequence for presentation.
+27. P0 Implementation Order
+Freeze/validate replay schemas.
+Build a crude JSONL replay stub within the first two hours.
+Build deterministic seed handling.
+Build the 72-hour potential-world generator.
+Generate newly authored, train/test-disjoint comments.
+Generate healthy/fatigue/acceleration/economic phases.
+Generate CPM-only and banter-storm controls.
+Integrate Person 2's runtime action interface.
+Build backend stream integration.
+Build P0 dashboard.
+Build timeline and audit views.
+Build replay controls.
+Run same-seed protected/no-action comparisons.
+Run integration acceptance tests.
+28. Definition of Done — P0
+A deterministic 72-hour replay runs end-to-end.
+Replay does not pre-bake action outcomes.
+Potential-world curves are deterministic and reusable.
+Protected/no-action use identical potential worlds.
+Comments are disjoint from Person 1 train/test data.
+CPM-only negative control does not combined-pause.
+Banter storm does not combined-pause under stable economics.
+Frontend displays backend state/risk accurately.
+Replay controls work.
+Main timeline works.
+Audit/action history works.
+Paused heartbeat behavior is visible where relevant.
+No Person 1 or Person 2 owned files were modified.
+29. Person 3 Does NOT Own These Decisions
+Decision
+Owner
+Person 3 Role
+NLP model/training
+Person 1
+Consume stable NLP interface
+Taxonomy/calibration
+Person 1
+Do not modify
+Audience risk formula
+Person 2
+Display result
+Economic risk formula
+Person 2
+Display result
+State machine
+Person 2
+Display result
+Action/readback
+Person 2
+Display result
+Thresholds
+Person 2
+Read only
+Potential-world generation
+Person 3
+Own
+Replay comment generation
+Person 3
+Own
+Frontend
+Person 3
+Own
+30. Git / Merge Protocol
+Use a dedicated branch such as feature/person3-replay-frontend.
+Keep replay commits separate from frontend commits when practical.
+Commit schemas first, then generator, then integration, then frontend.
+Do not modify backend code merely to make frontend integration easier.
+If an API response is insufficient, document the required contract addition for Person 2.
+Do not silently create frontend-only fallback calculations for missing backend fields.
+Do not reformat shared files.
+Run a changed-files audit before handoff.
+If another person's work conflicts, stop at the boundary and report the conflict rather than editing their ownership area.
+31. Final Handoff Checklist
+☐ Replay schemas validated
+☐ Crude stub replay completed
+☐ 72-hour deterministic replay completed
+☐ Same-seed reproducibility verified
+☐ Potential-world curves generated
+☐ Train/test/replay separation verified
+☐ Healthy/fatigue/acceleration/economic phases implemented
+☐ CPM-only negative control implemented
+☐ Banter-storm control implemented
+☐ Runtime action interface integrated
+☐ Protected/no-action identical potential worlds verified
+☐ P0 dashboard complete
+☐ Timeline complete
+☐ Action/audit views complete
+☐ Replay controls complete
+☐ XSS-safe comment rendering verified
+☐ Integration tests passing
+☐ Changed-files audit clean
+32. One-Line Responsibility
+Person 3 owns: deterministic potential-world replay + newly authored scenario comments + frontend visualization + integration glue. Person 3 generates the world; Person 2 decides and applies the protection action.

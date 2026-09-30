@@ -1,0 +1,20 @@
+{
+  "dataset_name": "AdFatigueRadar Human-Audited Held-Out Test Corpus",
+  "total_samples": 320,
+  "version": "v1.0",
+  "categories": {
+    "product_complaint": 40,
+    "service_complaint": 40,
+    "fatigue": 40,
+    "mockery": 40,
+    "spam": 40,
+    "banter_meme": 40,
+    "neutral": 40,
+    "positive": 40
+  },
+  "annotator_consensus_rate": 0.985,
+  "preprocessing_version": "preproc-v1.0",
+  "is_held_out": true,
+  "disjoint_from_training": true,
+  "disjoint_from_replay": true
+}

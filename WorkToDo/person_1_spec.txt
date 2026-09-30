@@ -1,0 +1,267 @@
+AdFatigueRadar — PERSON 1AI / NLP Execution Specification
+Isolated parallel-work package • P0 first • P1/P2 optional
+1. Mission and Boundary
+Person 1 owns the AI/NLP layer only. The goal is to convert raw replay/live comments into deterministic, calibrated NLP outputs that the backend risk engine can consume without Person 1 modifying risk logic, action logic, replay economics, API routes, or frontend code.
+Primary outcome: reliable two-stage comment classification with the frozen NLP output contract.
+P0 outcome: general sentiment + custom 8-class taxonomy + confidence + critical-complaint flag + latency benchmark.
+P1 outcome: sentiment-only baseline artifact.
+P2 outcome: optional predictor work only after P0 is stable.
+All replay comments used for evaluation must be newly authored and disjoint from training/test data.
+2. Non-Negotiable Isolation Rules
+Person 1 must work only inside backend/nlp/ and data/training/ plus data/test_human_audited/ and NLP-owned scripts/tests.
+Do NOT edit backend/risk/.
+Do NOT edit backend/actions/.
+Do NOT edit backend/replay/.
+Do NOT edit backend/api/.
+Do NOT edit frontend/.
+Do NOT edit config/thresholds.yaml or scripts/check_config.py.
+Do NOT modify replay scenario generators or potential-world economic curves.
+Do NOT change frozen JSONL schemas.
+Do NOT change shared API endpoint behavior.
+Do NOT add packages globally or alter another person's environment.
+Do NOT download or modify model files inside a shared mutable directory during another person's run.
+Use a local/cache directory owned by Person 1 for model weights; commit code, not large model weights.
+If a contract change appears necessary, document it as a proposed change instead of directly editing the shared contract.
+3. Exact File Ownership
+Person 1 may create and modify the following paths:
+backend/nlp/├── __init__.py├── preprocessing.py├── sentiment.py├── taxonomy.py├── classifier.py├── calibration.py├── inference.py├── cache.py├── benchmark.py├── baselines.py              # P1└── README.mddata/training/├── README.md├── labels.jsonl              # if needed└── source_manifest.jsondata/test_human_audited/├── README.md├── labels.jsonl└── audit_manifest.jsonbackend/tests/nlp/├── test_preprocessing.py├── test_taxonomy.py├── test_classifier.py├── test_calibration.py├── test_inference.py├── test_cache.py├── test_benchmark.py└── test_baselines.pyscripts/└── benchmark_nlp.py          # NLP-only script; unique filenamedocs/└── person1_nlp_report.md     # optional handoff/report artifact
+If the repository already has equivalent filenames, Person 1 must use the existing NLP namespace rather than creating duplicate implementations.
+4. Files Person 1 Must Treat as Read-Only
+config/thresholds.yaml
+scripts/check_config.py
+replay/schemas/*
+replay/scenarios/*
+replay/generated/*
+backend/risk/*
+backend/actions/*
+backend/api/*
+frontend/*
+backend/models/*
+backend/main.py
+5. Frozen Input and Output Contract
+Person 1 consumes CommentEvent records. The canonical input is:
+{  "event_id": "comment_0001",  "timestamp": "2026-09-30T12:00:00Z",  "campaign_id": "campaign_01",  "ad_id": "ad_07",  "author_id": "author_184",  "text": "Bro this ad again 😂",  "reactions": 12,  "replies": 3}
+Person 1 emits exactly the NLP fields below; backend owns aggregation and risk calculation:
+{  "comment_id": "comment_0001",  "sentiment": "negative",  "sentiment_score": 0.91,  "category": "fatigue",  "confidence": 0.94,  "critical_complaint": false}
+Do not add action/state/risk fields to this contract.
+Do not compute audience_risk or economic_risk inside NLP.
+Do not mutate campaign state.
+Do not call pause/unpause APIs from NLP.
+6. Frozen Taxonomy
+The custom taxonomy contains exactly eight categories:
+product_complaint
+service_complaint
+fatigue
+mockery
+spam
+banter_meme
+neutral
+positive
+Category weights are consumed by the risk layer and must NOT be duplicated as decision logic in Person 1's classifier.
+Important semantic rule: 'again' means fatigue only when it indicates repeated exposure to the advertisement. Examples:
+“Bro this ad again 😂” → fatigue
+“Bought again, love it” → positive
+“Ordered again, thank you!” → positive
+7. Two-Stage NLP Design
+7.1 Stage 1 — General Sentiment
+Return positive / neutral / negative.
+Return a calibrated confidence/score suitable for downstream reporting.
+This stage exists independently from the custom taxonomy.
+Raw stage-1 negative share is reserved for the sentiment-only baseline and must not replace the weighted harmful-share definition.
+7.2 Stage 2 — Custom Ad-Fatigue Taxonomy
+Classify each comment into exactly one of the eight taxonomy classes.
+Return confidence.
+Return critical_complaint only when the complaint criteria are satisfied.
+Banter/meme content must not be converted into harmful complaint categories merely because sentiment is negative.
+Humorous mockery may be mockery, but banter_meme must remain non-harmful.
+8. Critical Complaint Logic
+Person 1 owns the NLP classification of complaint categories and the calibrated confidence. The final rate gate is a backend concern.
+Eligible categories: product_complaint and service_complaint.
+Minimum classifier confidence: 0.85.
+Optional safety/critical keywords may assist classification, but keyword presence alone must never create a critical complaint.
+Person 1 should expose enough metadata for backend aggregation but must not decide the campaign action.
+9. Training and Data Leakage Controls
+Create explicit train/test manifests.
+Keep test_human_audited separate from training data.
+Replay comments must be newly authored and disjoint from both training and test sets.
+Do not use replay-generated labels to train the model.
+Do not tune thresholds against the held-out reporting replay seeds.
+Record model version and preprocessing version with every cached result.
+If LLM-assisted pre-labeling is used, human-audit a representative sample and record provenance.
+Do not silently overwrite the human-audited labels.
+10. Labeling Guide
+Create a concise labeling guide before large-scale labeling. It must define:
+product complaint vs service complaint
+fatigue vs mockery
+mockery vs banter_meme
+spam vs repeated genuine complaint
+neutral vs positive
+repeated-ad exposure vs genuine repeated purchase/order
+critical complaint criteria
+uncertain/ambiguous examples and adjudication rules
+11. Model and Preprocessing Requirements
+Use HuggingFace Transformers or the project-approved local NLP stack.
+Normalize whitespace and obvious formatting noise without destroying semantic cues such as emojis or repetition.
+Preserve enough context to distinguish 'this ad again' from 'bought again'.
+Keep preprocessing deterministic and versioned.
+Support CPU execution for the hackathon environment.
+Benchmark a practical model before selecting a larger model.
+If CPU inference is too slow, benchmark batching, quantization, or a smaller model rather than changing the project contract.
+Model weights should be cached locally and should not be downloaded on every replay.
+12. Caching
+Implement replay-safe NLP caching keyed by:
+comment_id + model_version + preprocessing_version
+A cache hit may accelerate replay but must not be used to claim live latency.
+Live latency benchmark must bypass the cache.
+Cache format must be deterministic and safely invalidated when model/preprocessing versions change.
+13. Latency Benchmark
+Measure end-to-end NLP classification latency on the target machine.
+Measure both single-comment and batched inference.
+Report p50, p95, and worst observed latency.
+P0 target: sub-minute classification latency.
+Clearly separate cold-start model loading from steady-state inference.
+Do not hide slow inference by using replay cache.
+14. P0 Implementation Order
+Create the isolated NLP module and tests.
+Freeze preprocessing and taxonomy definitions.
+Build the labeling guide and manifests.
+Create/validate training labels and human-audited test labels.
+Benchmark candidate sentiment/taxonomy models.
+Implement Stage 1 sentiment inference.
+Implement Stage 2 eight-class inference.
+Implement confidence calibration.
+Implement critical-complaint classification flag.
+Implement deterministic result serialization matching the frozen NLP output contract.
+Implement replay cache.
+Add unit/integration tests.
+Run latency benchmark.
+Produce the Person 1 handoff report.
+15. Person 1 Does NOT Own These Decisions
+Decision
+Owner
+Person 1 Role
+Audience risk formula
+Person 2
+Provide NLP fields only
+Economic risk formula
+Person 2
+No role
+WARNING/SOFT/PAUSE gates
+Person 2
+No role
+State machine
+Person 2
+No role
+Action execution/readback
+Person 2
+No role
+Replay potential-world curves
+Person 3
+Consume only if needed for validation
+Frontend dashboard
+Person 3
+Provide contract examples only
+API endpoints
+Person 2
+No route edits
+Thresholds.yaml
+Person 2
+Read-only
+Scenario timing/lead-time tuning
+Person 2 + Person 3
+Provide classifier metrics; do not tune economic gates
+16. Interface to Person 2
+Person 1 hands off a stable pure function/service boundary. Preferred conceptual interface:
+class CommentClassifier:    def classify(self, comment_event: CommentEvent) -> NLPResult:        ...
+The implementation may differ internally, but the returned data must match the frozen NLP output contract.
+Person 2 should not import internal model classes.
+Person 2 should depend only on the stable classifier interface/output schema.
+Person 1 must not import backend/risk or backend/actions.
+No circular imports.
+No database writes from the NLP package unless explicitly approved as an isolated cache implementation.
+17. Interface to Person 3
+Person 3 may call the stable classifier interface for replay integration.
+Person 3 owns replay event generation and frontend integration.
+Person 1 supplies sample NLP outputs and latency numbers.
+Person 1 does not modify replay scenarios to force a desired dashboard result.
+18. P1 — Sentiment-Only Baseline
+Create a baseline using only Stage-1 raw negative sentiment.
+It must be clearly labeled as a baseline, not the production combined guard.
+Its purpose is to demonstrate that sentiment-only detection can react to banter/meme conditions that the combined weighted guard should suppress.
+Do not alter the production risk engine to accommodate the baseline.
+19. P2 — Optional Predictor
+P2 is optional and must not block P0.
+Use five-minute observations if implemented.
+Use multiple seeds and separate train/test seeds.
+Prefer differenced time series for correlation analysis.
+Report AUC, precision-recall, and lead-time distribution.
+If no trained predictor is shipped, expose prediction_score as null or explicitly label any acceleration heuristic as heuristic—not predictive ML.
+Do not claim the project predicts future CPA degradation unless held-out evidence supports that claim.
+20. Tests Person 1 Must Deliver
+Preprocessing determinism
+Eight-class taxonomy coverage
+Representative fatigue examples
+Again/purchase disambiguation
+Mockery vs banter separation
+Complaint confidence behavior
+Critical complaint keyword-only rejection
+Confidence calibration
+Frozen NLP JSON contract
+Cache key/version behavior
+Cache invalidation
+No train/test overlap
+No replay/test overlap
+Batch vs single inference consistency within defined tolerance
+CPU latency benchmark
+P1 sentiment-only baseline output
+21. Definition of Done — P0
+A clean checkout containing only Person 1 changes runs without requiring another person's uncommitted code.
+All NLP tests pass.
+The classifier emits the frozen NLP contract.
+All eight taxonomy classes are represented in the audited test set.
+Train/test/replay provenance is documented.
+Critical complaint logic is confidence-gated.
+Replay cache works and is versioned.
+Live benchmark bypasses cache.
+Sub-minute latency target is measured, not merely claimed.
+A concise handoff report contains model/version, dataset provenance, metrics, latency, known failure modes, and exact integration instructions.
+No files outside Person 1 ownership are modified.
+22. Handoff Package
+At handoff, Person 1 provides:
+Committed NLP source files.
+Unit/integration tests.
+Training/test manifests and provenance documentation.
+Human-audited test labels.
+Model identifier/version and preprocessing version.
+Latency benchmark report.
+NLP output examples.
+Known failure cases.
+Stable classifier interface instructions.
+P1 sentiment-only baseline artifact.
+Optional P2 predictor report if implemented.
+23. Git / Merge Protocol
+Use a dedicated branch such as feature/person1-nlp.
+Commits must be limited to Person 1-owned paths.
+Prefer small commits: nlp-contract, taxonomy, model, calibration, cache, tests, benchmark.
+Before handoff, run a changed-files check and confirm no out-of-scope files changed.
+Do not resolve another person's merge conflict by editing their owned files; report the conflict instead.
+Do not reformat shared files.
+Do not update global dependency files unless the team explicitly agrees on one shared dependency commit. Prefer Person 1 to report required dependencies in the handoff first.
+If a dependency must be added, add it through the team's agreed dependency-owner process rather than independently rewriting requirements.
+24. Final Handoff Checklist
+☐ NLP module isolated
+☐ No risk/action/API/frontend files changed
+☐ Frozen input/output contract respected
+☐ Eight-class taxonomy complete
+☐ Human-audited test set separated
+☐ Replay comments disjoint from train/test
+☐ Confidence calibration complete
+☐ Critical complaint gate implemented
+☐ Cache versioned
+☐ Latency benchmark complete
+☐ Sentiment-only baseline complete
+☐ Tests passing
+☐ Changed-files audit clean
+☐ Handoff report complete
+25. One-Line Responsibility
+Person 1 owns: raw comment → calibrated sentiment + eight-class ad-fatigue taxonomy + critical-complaint signal + latency/cache evidence. Nothing beyond that boundary is required for Person 1's P0 completion.
