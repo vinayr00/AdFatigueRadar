@@ -1,0 +1,10 @@
+data/models/
+data/banking77/
+data/tweeteval/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.db
+*.sqlite
+*.joblib
+.ipynb_checkpoints/
