@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Download,
   Plus,
@@ -29,12 +29,20 @@ import { useCampaigns } from "../hooks/useCampaigns";
 
 export const Comparisons: React.FC = () => {
   const [activeTab, setActiveTab] = useState("campaign");
-  const [campaignAId, setCampaignAId] = useState("cmp_summer_2024");
-  const [campaignBId, setCampaignBId] = useState("cmp_monsoon_sale");
-  const [dateRange] = useState("Jun 01, 2024 – Jun 30, 2024");
+  const [campaignAId, setCampaignAId] = useState("");
+  const [campaignBId, setCampaignBId] = useState("");
 
   const { data: campaigns = [] } = useCampaigns();
   const { data: comparison, isLoading } = useComparisons(campaignAId, campaignBId);
+
+  useEffect(() => {
+    if (campaigns.length && !campaignAId) setCampaignAId(campaigns[0].id);
+    if (campaigns.length > 1 && !campaignBId) setCampaignBId(campaigns[1].id);
+  }, [campaigns, campaignAId, campaignBId]);
+
+  if (!isLoading && campaigns.length < 2) {
+    return <section className="m-6 rounded-2xl border border-slate-200 bg-white p-8 text-slate-700">Create or load two campaigns with backend data to compare them.</section>;
+  }
 
   if (isLoading || !comparison) {
     return (
@@ -148,7 +156,7 @@ export const Comparisons: React.FC = () => {
         </div>
 
         <div className="text-xs font-medium text-slate-600 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
-          📅 {dateRange}
+          📅 Current available telemetry
         </div>
       </div>
 
@@ -574,14 +582,14 @@ export const Comparisons: React.FC = () => {
               </tr>
               <tr>
                 <td className="py-2 font-medium text-slate-600">CPA</td>
-                <td className="py-2 font-semibold text-slate-800">$18.40</td>
-                <td className="py-2 text-slate-600">$23.10</td>
+                <td className="py-2 font-semibold text-slate-800">$18₹1,840</td>
+                <td className="py-2 text-slate-600">$23₹2,310</td>
                 <td className="py-2 text-right font-bold text-[#059669]">↓ 20%</td>
               </tr>
               <tr>
                 <td className="py-2 font-medium text-slate-600">CPM</td>
-                <td className="py-2 font-semibold text-slate-800">$9.10</td>
-                <td className="py-2 text-slate-600">$12.50</td>
+                <td className="py-2 font-semibold text-slate-800">$9₹2,310</td>
+                <td className="py-2 text-slate-600">$12₹1,680</td>
                 <td className="py-2 text-right font-bold text-[#059669]">↓ 27%</td>
               </tr>
             </tbody>

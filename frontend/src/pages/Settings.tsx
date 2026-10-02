@@ -38,7 +38,7 @@ export const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState("general");
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  const { data: settings, isLoading } = useSettings();
+  const { data: settings, isLoading, error } = useSettings();
   const updateSettingsMutation = useUpdateSettings();
 
   const [notificationState, setNotificationState] = useState({
@@ -68,6 +68,11 @@ export const Settings: React.FC = () => {
     },
   });
 
+  if (error) {
+    return <section role="alert" className="m-6 rounded-2xl border border-amber-300 bg-amber-50 p-6 text-sm text-amber-950">
+      Workspace settings are not configured in the backend yet. {error instanceof Error ? error.message : ""}
+    </section>;
+  }
   if (isLoading || !settings) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -526,6 +531,7 @@ export const Settings: React.FC = () => {
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Currency</label>
                 <select className="w-full px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl">
+                  <option selected>INR (₹)</option>
                   <option>USD ($)</option>
                   <option>EUR (€)</option>
                 </select>

@@ -26,16 +26,16 @@ export interface CommentEvent {
   timestamp: string;
   campaign_id: string;
   ad_id: string;
-  author_id: string;
+  author_id?: string;
   author_name?: string;
   avatar_seed?: string;
   text: string;
   reactions: number;
   replies: number;
-  sentiment: "positive" | "neutral" | "negative";
-  sentiment_score: number;
-  category: CommentCategory;
-  confidence: number;
+  sentiment: "positive" | "neutral" | "negative" | null;
+  sentiment_score: number | null;
+  category: CommentCategory | null;
+  confidence: number | null;
   critical_complaint: boolean;
 }
 
@@ -77,11 +77,11 @@ export interface Campaign {
   impressions: number;
   clicks: number;
   conversions: number;
-  ctr: number;
+  ctr: number | null;
   cpa: number | null;
-  cpm: number;
+  cpm: number | null;
   spend: number;
-  roas: number;
+  roas: number | null;
   date_range: string;
   created_at: string;
   thumbnail_url: string;
@@ -93,23 +93,25 @@ export interface Campaign {
 export interface ReplayTimelinePoint {
   hour: number;
   timestamp_simulated: string;
-  potential_impressions: number;
+  potential_impressions: number | null;
   observed_impressions: number;
-  potential_spend: number;
+  potential_spend: number | null;
   observed_spend: number;
   audience_risk: number;
   economic_risk: number | null;
   cpa: number | null;
-  cpm: number;
+  cpm: number | null;
   state: CampaignState;
   events?: string[];
   action_applied?: string;
+  signals?: Record<string, number | null>;
+  stale?: boolean;
 }
 
 export interface ReplayState {
   campaign_id: string;
   scenario_name: string;
-  seed: number;
+  seed: number | null;
   current_hour: number;
   simulated_timestamp: string;
   is_running: boolean;

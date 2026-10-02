@@ -5,7 +5,8 @@ export function useReplay(campaignId: string = "cmp_summer_2024", speed: number 
   return useQuery({
     queryKey: ["replay", campaignId, speed],
     queryFn: () => fetchReplaySnapshot(campaignId, speed),
-    staleTime: 5000,
+    staleTime: 1000,
+    refetchInterval: 2000,
   });
 }
 

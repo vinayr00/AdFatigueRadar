@@ -20,7 +20,7 @@ from .constants import TAXONOMY_CATEGORIES, DEFAULT_MAX_SEQ_LENGTH, MODEL_VERSIO
 from .preprocessing import normalize_text
 from .pii_sanitizer import PIISanitizer
 from .cache import NLPCache
-from .model_loader import ProductionModelBundle, load_production_model
+from .model_loader import ProductionModelBundle, load_production_model, resolve_local_transformer_dir
 from .schemas import NLPRequest, NLPResponse, BatchNLPResponse
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -49,11 +49,12 @@ class ProductionServingEngine:
         
         # Load HuggingFace Backbones onto target device
         print(f"[ServingEngine] Loading RoBERTa Transformers on {self.device}...")
-        self.tokenizer = AutoTokenizer.from_pretrained(LOCAL_ROBERTA_DIR, local_files_only=True)
-        self.base_model = AutoModel.from_pretrained(LOCAL_ROBERTA_DIR, local_files_only=True).to(self.device)
+        model_dir = resolve_local_transformer_dir(LOCAL_ROBERTA_DIR)
+        self.tokenizer = AutoTokenizer.from_pretrained(model_dir, local_files_only=True)
+        self.base_model = AutoModel.from_pretrained(model_dir, local_files_only=True).to(self.device)
         self.base_model.eval()
         
-        self.sentiment_model = AutoModelForSequenceClassification.from_pretrained(LOCAL_ROBERTA_DIR, local_files_only=True).to(self.device)
+        self.sentiment_model = AutoModelForSequenceClassification.from_pretrained(model_dir, local_files_only=True).to(self.device)
         self.sentiment_model.eval()
         
         # PII Sanitizer & Cache
@@ -78,7 +79,7 @@ class ProductionServingEngine:
         print(f"[ServingEngine] Warming up inference engine on {self.device}...")
         dummy_texts = ["Warmup test comment for AdFatigue radar", "Checking latency pipeline initialization"] * num_samples
         _ = self.predict_batch([NLPRequest(text=t, bypass_cache=True) for t in dummy_texts[:num_samples]])
-        print("  ✓ Warm-up forward passes completed successfully.")
+        print("  [OK] Warm-up forward passes completed successfully.")
 
     def _extract_features(self, texts: List[str]) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -117,7 +118,7 @@ class ProductionServingEngine:
         
         # 1. PII Sanitization
         clean_text, pii_entities = self.sanitizer.sanitize(request.text)
-        has_pii = len(pii_entities) > 0
+        has_pii = any(count > 0 for count in pii_entities.values())
         
         # 2. Check Cache
         if self.cache and not request.bypass_cache:

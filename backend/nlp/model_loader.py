@@ -7,6 +7,7 @@ explicit device allocation (CUDA / CPU), and safe deserialization of frozen Phas
 
 import os
 import sys
+from pathlib import Path
 import json
 import hashlib
 import joblib
@@ -23,6 +24,39 @@ PHASE3_MODEL_FILE = os.path.join(ARTIFACTS_DIR, "phase3_final_model.joblib")
 PHASE3_SCALER_FILE = os.path.join(ARTIFACTS_DIR, "phase3_temperature_scaler.json")
 PHASE3_CONFIG_FILE = os.path.join(ARTIFACTS_DIR, "phase3_config.json")
 PHASE3_MAPPING_FILE = os.path.join(ARTIFACTS_DIR, "phase3_class_mapping.json")
+
+
+def resolve_local_transformer_dir(path: str | os.PathLike[str]) -> str:
+    """Resolve a local model directory before Transformers can parse it as a Hub ID."""
+    candidate = Path(path).expanduser()
+    try:
+        resolved = candidate.resolve(strict=True)
+    except (OSError, RuntimeError) as exc:
+        raise FileNotFoundError(f"Local transformer model directory does not exist: {candidate}") from exc
+    if not resolved.is_dir():
+        raise FileNotFoundError(f"Local transformer model path is not a directory: {resolved}")
+    required = ("config.json",)
+    missing = [name for name in required if not (resolved / name).is_file()]
+    has_tokenizer = any(
+        (resolved / name).is_file()
+        for name in ("tokenizer.json", "vocab.json", "spiece.model", "sentencepiece.bpe.model")
+    )
+    weight_files = [name for name in ("model.safetensors", "pytorch_model.bin") if (resolved / name).is_file()]
+    index_files = [resolved / name for name in ("model.safetensors.index.json", "pytorch_model.bin.index.json") if (resolved / name).is_file()]
+    for index_file in index_files:
+        try:
+            index_data = json.loads(index_file.read_text(encoding="utf-8"))
+            weight_files.extend(sorted(set(index_data.get("weight_map", {}).values())))
+        except (OSError, ValueError, TypeError):
+            missing.append(index_file.name + " with a valid weight_map")
+    has_weights = bool(weight_files) and all((resolved / name).is_file() for name in weight_files)
+    if not has_tokenizer:
+        missing.append("tokenizer.json, vocab.json, or SentencePiece model")
+    if not has_weights:
+        missing.append("model.safetensors or pytorch_model.bin")
+    if missing:
+        raise FileNotFoundError(f"Local transformer model is incomplete at {resolved}; missing: {', '.join(missing)}")
+    return str(resolved)
 
 
 class ArtifactIntegrityError(RuntimeError):
@@ -108,7 +142,7 @@ def load_production_model(device_mode: str = "auto") -> ProductionModelBundle:
     """
     print("[ModelLoader] 1/4 Verifying SHA-256 artifact integrity...")
     verified_checksums = verify_artifact_checksums()
-    print(f"  ✓ Verified {len(verified_checksums)} production artifacts via SHA-256.")
+    print(f"  [OK] Verified {len(verified_checksums)} production artifacts via SHA-256.")
 
     print("[ModelLoader] 2/4 Initializing compute device...")
     if device_mode == "auto":
@@ -123,7 +157,7 @@ def load_production_model(device_mode: str = "auto") -> ProductionModelBundle:
         raise ValueError(f"Invalid device_mode '{device_mode}'. Must be 'auto', 'cuda', or 'cpu'.")
 
     device_name = torch.cuda.get_device_name(0) if device.type == "cuda" else "Host CPU"
-    print(f"  ✓ Target compute device: {device} ({device_name})")
+    print(f"  [OK] Target compute device: {device} ({device_name})")
 
     print("[ModelLoader] 3/4 Loading Phase 3 model artifacts and configuration...")
     if not os.path.exists(PHASE3_MODEL_FILE):
@@ -171,5 +205,5 @@ def load_production_model(device_mode: str = "auto") -> ProductionModelBundle:
     assert hasattr(bundle.classifier, "predict_proba") or hasattr(bundle.classifier, "decision_function"), \
         "Loaded model does not have expected scikit-learn classification methods!"
     
-    print(f"  ✓ Model Loaded Successfully: {bundle.model_version} (T={bundle.temperature:.4f}, tau={bundle.operational_threshold:.2f})")
+    print(f"  [OK] Model Loaded Successfully: {bundle.model_version} (T={bundle.temperature:.4f}, tau={bundle.operational_threshold:.2f})")
     return bundle

@@ -29,12 +29,21 @@ from backend.models.backend_models import CommentSummary, StatusResponse, Timeli
 router = APIRouter(prefix="/campaigns", tags=["campaigns"])
 
 
-@router.get("/{campaign_id}/status")
-async def get_status(campaign_id: str) -> JSONResponse:
-    reg = get_registry()
-    ctx = reg.get(campaign_id)
+def _context_or_404(campaign_id: str):
+    registry = get_registry()
+    ctx = registry.get(campaign_id)
+    if ctx is None:
+        from backend.db.repository import repository
+        if repository.get_campaign_state(campaign_id) is not None:
+            ctx = registry.get_or_create(campaign_id)
     if ctx is None:
         raise HTTPException(status_code=404, detail=f"Campaign '{campaign_id}' not found")
+    return ctx
+
+
+@router.get("/{campaign_id}/status")
+async def get_status(campaign_id: str) -> JSONResponse:
+    ctx = _context_or_404(campaign_id)
 
     machine = ctx.machine
     lock = ctx.lock
@@ -90,10 +99,7 @@ async def get_status(campaign_id: str) -> JSONResponse:
 
 @router.get("/{campaign_id}/timeline")
 async def get_timeline(campaign_id: str) -> JSONResponse:
-    reg = get_registry()
-    ctx = reg.get(campaign_id)
-    if ctx is None:
-        raise HTTPException(status_code=404, detail=f"Campaign '{campaign_id}' not found")
+    ctx = _context_or_404(campaign_id)
     runner = ctx.runner
     if runner is None:
         return JSONResponse(content={"campaign_id": campaign_id, "timeline": []})
@@ -109,10 +115,7 @@ async def get_comments(
     limit: int = Query(default=100, ge=1, le=1000),
 ) -> JSONResponse:
     """Return recent rolling-window comment/NLP fields without author identity."""
-    reg = get_registry()
-    ctx = reg.get(campaign_id)
-    if ctx is None:
-        raise HTTPException(status_code=404, detail=f"Campaign '{campaign_id}' not found")
+    ctx = _context_or_404(campaign_id)
     with ctx.lock:
         comments = ctx.machine.aggregator.get_window_comments()[-limit:]
         payload = [
@@ -136,24 +139,44 @@ async def get_comments(
 @router.get("/{campaign_id}/stream")
 async def stream_status(campaign_id: str) -> StreamingResponse:
     """SSE stream — event: status|action|heartbeat, JSON data, keepalive comment."""
-    reg = get_registry()
-    ctx = reg.get(campaign_id)
-    if ctx is None:
-        raise HTTPException(status_code=404, detail=f"Campaign '{campaign_id}' not found")
+    ctx = _context_or_404(campaign_id)
 
     async def event_generator() -> AsyncIterator[str]:
+        seen_comments: set[str] = set()
+        last_state = None
+        last_alert_signature = None
         try:
             while True:
                 with ctx.lock:
                     latest = ctx.runner.latest_tick
+                    comments = ctx.machine.aggregator.get_window_comments()
                 if latest:
                     data = json.dumps({
                         "state": latest.state.value,
                         "severity": latest.severity.value,
                         "audience_risk": latest.audience_risk,
                         "economic_risk": latest.economic_risk,
+                        "sim_time": ctx.machine.aggregator.clock.current.isoformat() if ctx.machine.aggregator.clock.current else None,
+                        "is_running": ctx.runner.is_running(),
                     })
-                    yield f"event: status\ndata: {data}\n\n"
+                    yield f"event: STEP_UPDATE\ndata: {data}\n\n"
+                    if latest.state.value != last_state:
+                        last_state = latest.state.value
+                        yield f"event: STATE_CHANGE\ndata: {data}\n\n"
+                    for comment in comments:
+                        if comment.event_id in seen_comments:
+                            continue
+                        seen_comments.add(comment.event_id)
+                        comment_data = json.dumps({"event_id": comment.event_id,
+                            "timestamp": comment.timestamp.isoformat(), "campaign_id": comment.campaign_id,
+                            "ad_id": comment.ad_id, "text": comment.text, "sentiment": comment.sentiment,
+                            "sentiment_score": comment.sentiment_score, "category": comment.category,
+                            "confidence": comment.confidence, "critical_complaint": comment.critical_complaint})
+                        yield f"event: COMMENT\ndata: {comment_data}\n\n"
+                    alert_signature = (latest.severity.value, latest.stale, latest.anomaly)
+                    if (latest.severity.value in {"WARNING", "CRITICAL"} or latest.stale or latest.anomaly) and alert_signature != last_alert_signature:
+                        last_alert_signature = alert_signature
+                        yield f"event: ALERT\ndata: {data}\n\n"
                 else:
                     yield ": keepalive\n\n"
                 await asyncio.sleep(5)
@@ -167,12 +190,62 @@ async def stream_status(campaign_id: str) -> StreamingResponse:
     )
 
 
+@router.get("/{campaign_id}/replay/snapshot")
+async def replay_snapshot(campaign_id: str) -> JSONResponse:
+    """Frontend adapter over recorded simulation ticks; unavailable potential-world values are null."""
+    ctx = _context_or_404(campaign_id)
+    timeline = ctx.runner.get_timeline()
+    points = []
+    first_ts = datetime.fromisoformat(timeline[0]["sim_time"]) if timeline else None
+    for item in timeline:
+        sim_time = datetime.fromisoformat(item["sim_time"])
+        spend = item.get("observed_spend")
+        impressions = item.get("observed_impressions")
+        clicks = item.get("observed_clicks")
+        conversions = item.get("observed_conversions")
+        points.append({
+            "hour": (sim_time-first_ts).total_seconds()/3600 if first_ts else 0,
+            "timestamp_simulated": sim_time.isoformat(),
+            "potential_impressions": None, "observed_impressions": impressions,
+            "potential_spend": None, "observed_spend": spend,
+            "audience_risk": item["audience_risk"], "economic_risk": item["economic_risk"],
+            "cpa": spend/conversions if conversions else None,
+            "cpm": item.get("cpm"),
+            "state": item["state"], "events": item.get("reason_codes", []),
+            "action_applied": item.get("action_events", [None])[-1] if item.get("action_events") else None,
+            "signals": item.get("signal_breakdown", {}), "stale": item.get("stale", False),
+        })
+    agg = ctx.machine.aggregator
+    comments = [{"event_id": c.event_id, "timestamp": c.timestamp.isoformat(), "campaign_id": c.campaign_id,
+                 "ad_id": c.ad_id, "text": c.text, "sentiment": c.sentiment, "sentiment_score": c.sentiment_score,
+                 "category": c.category, "confidence": c.confidence, "critical_complaint": c.critical_complaint}
+                for c in agg.get_window_comments() if c.sentiment is not None]
+    now = agg.clock.current
+    start = first_ts
+    audits = ctx.audit_log.get_all()
+    return JSONResponse(content={
+        "campaign_id": campaign_id, "scenario_name": campaign_id, "seed": 0,
+        "current_hour": points[-1]["hour"] if points else 0,
+        "simulated_timestamp": now.isoformat() if now else None,
+        "is_running": ctx.runner.is_running(), "speed": ctx.runner.speed,
+        "current_state": ctx.machine.state.value,
+        "previous_state": None,
+        "state_reason": ", ".join(points[-1].get("events", [])) if points else None,
+        "points": points, "live_comments": comments,
+        "actions_history": [{"id": e.audit_id, "action": e.action, "mode": "SANDBOX",
+            "executed": bool(e.readback_verified), "confidence": e.confidence or 0,
+            "reason": e.action.replace("_", " ").title(),
+            "previous_state": e.previous_state.value if e.previous_state else e.new_state.value if e.new_state else "ACTIVE",
+            "new_state": e.new_state.value if e.new_state else "ACTIVE",
+            "readback_verified": bool(e.readback_verified), "audit_event_id": e.audit_id,
+            "timestamp": e.timestamp_simulated.isoformat()} for e in audits if e.action in {"PAUSE", "UNPAUSE", "SOFT_REDUCTION", "SOFT_RECOVERY"}],
+        "audit_trail": [e.model_dump(mode="json") for e in audits],
+    })
+
+
 @router.get("/{campaign_id}/audit")
 async def get_audit(campaign_id: str, limit: int = Query(default=100, ge=1, le=1000)) -> JSONResponse:
-    reg = get_registry()
-    ctx = reg.get(campaign_id)
-    if ctx is None:
-        raise HTTPException(status_code=404, detail=f"Campaign '{campaign_id}' not found")
+    ctx = _context_or_404(campaign_id)
     entries = ctx.audit_log.get_latest(limit)
     return JSONResponse(content={
         "campaign_id": campaign_id,
@@ -220,3 +293,19 @@ async def replay_reset(
         ctx.latest_tick = None
         ctx.latest_sim_time = None
     return JSONResponse(content={"reset": True, "campaign_id": campaign_id})
+
+
+@router.post("/{campaign_id}/replay/pause")
+async def replay_pause(campaign_id: str, _: None = Depends(verify_api_key)) -> JSONResponse:
+    ctx = _context_or_404(campaign_id)
+    if not ctx.runner.pause():
+        raise HTTPException(status_code=409, detail="Replay is not running")
+    return JSONResponse(content={"paused": True, "campaign_id": campaign_id})
+
+
+@router.post("/{campaign_id}/replay/resume")
+async def replay_resume(campaign_id: str, _: None = Depends(verify_api_key)) -> JSONResponse:
+    ctx = _context_or_404(campaign_id)
+    if not ctx.runner.resume():
+        raise HTTPException(status_code=409, detail="Replay is not paused")
+    return JSONResponse(content={"resumed": True, "campaign_id": campaign_id})

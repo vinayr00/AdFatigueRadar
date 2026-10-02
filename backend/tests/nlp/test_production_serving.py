@@ -79,6 +79,7 @@ def test_predict_single_endpoint(client):
     assert data["category"] == "fatigue"
     assert 0.0 <= data["confidence"] <= 1.0
     assert data["sentiment"] in ["positive", "neutral", "negative"]
+    assert data["pii_redacted"] is False
     assert len(data["probabilities"]) == 8
     assert isinstance(data["critical_complaint"], bool)
     assert isinstance(data["is_critical_complaint"], bool)

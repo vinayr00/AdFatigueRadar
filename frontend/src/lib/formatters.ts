@@ -21,14 +21,13 @@ export function formatNumber(val: number | null | undefined, compact = false): s
   return new Intl.NumberFormat("en-US").format(val);
 }
 
-export function formatCurrency(val: number | null | undefined, decimals = 2): string {
+export function formatCurrency(val: number | null | undefined, decimals = 0): string {
   if (val === null || val === undefined || isNaN(val) || !isFinite(val)) {
     return "—";
   }
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("en-IN", {
     style: "currency",
-    currency: "USD",
-    minimumFractionDigits: decimals,
+    currency: "INR",
     maximumFractionDigits: decimals,
   }).format(val);
 }

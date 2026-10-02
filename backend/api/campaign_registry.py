@@ -43,6 +43,22 @@ class CampaignRegistry:
             if campaign_id not in self._registry:
                 cfg = get_config()
                 machine = CampaignStateMachine(campaign_id, cfg)
+                from backend.db.repository import repository
+                saved_state = repository.get_campaign_state(campaign_id)
+                if saved_state:
+                    from backend.models.backend_models import CampaignState
+                    machine._state = CampaignState(saved_state[0])
+                    machine._pre_block_state = CampaignState(saved_state[1]) if saved_state[1] else None
+                saved_override = repository.get_latest_threshold_override(campaign_id)
+                if saved_override:
+                    from backend.api.threshold_validator import validate_overrides
+                    overrides, version = saved_override
+                    if not validate_overrides(overrides, cfg):
+                        machine.apply_threshold_override(overrides)
+                        try:
+                            machine._override_count = int(version.rsplit(".", 1)[1])
+                        except (IndexError, ValueError):
+                            pass
                 audit_log = AuditLog(campaign_id)
                 campaign_lock = threading.Lock()
                 runner = ReplayRunner(campaign_id, machine, audit_log, cfg)
@@ -55,6 +71,14 @@ class CampaignRegistry:
                     lock=campaign_lock,
                 )
                 self._registry[campaign_id] = ctx
+                from datetime import timezone
+                if saved_state is None:
+                    repository.save_campaign({
+                        "id": campaign_id, "name": campaign_id, "platform": "meta",
+                        "status": machine.state.value, "budget": None,
+                        "pre_block_state": machine.pre_block_state.value if machine.pre_block_state else None,
+                        "created_at": datetime.now(timezone.utc), "metadata_json": {},
+                    })
             return self._registry[campaign_id]
 
     def all_ids(self) -> list[str]:
@@ -78,3 +102,11 @@ def _reset_registry_for_tests() -> None:
     global _registry
     with _reg_lock:
         _registry = None
+    try:
+        from backend.db.repository import repository
+        for cid in ("api-campaign", "thresholds-c", "replay-c", "xss", "versioned-campaign",
+                    "real-timeline-c", "full-audit-c", "health-c", "replay-stream", "race-c",
+                    "replay-abort", "threshold-read", "timeline-populated", "healthy-watch", "a"):
+            repository.delete_campaign(cid)
+    except Exception:
+        pass

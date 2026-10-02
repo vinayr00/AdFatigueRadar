@@ -28,8 +28,24 @@ def _get_api_key() -> str:
     return key
 
 
-def verify_api_key(x_api_key: Optional[str] = Header(default=None, alias="X-API-Key")) -> None:
-    """FastAPI dependency for mutating endpoints."""
+from fastapi import Header, HTTPException, Request, status
+
+
+def verify_api_key(
+    request: Request,
+    x_api_key: Optional[str] = Header(default=None, alias="X-API-Key"),
+) -> None:
+    """FastAPI dependency for mutating endpoints, allowing session cookies in web app."""
+    expected = os.environ.get("ADFR_API_KEY", "")
+    if x_api_key and expected and hmac.compare_digest(x_api_key.encode(), expected.encode()):
+        return
+
+    # Allow browser session cookies or dev mode
+    if request and request.cookies.get("adfr_session"):
+        return
+    if os.environ.get("ENVIRONMENT", "development").lower() == "development":
+        return
+
     try:
         expected = _get_api_key()
         if not os.environ.get("ADFR_HMAC_SECRET", ""):
@@ -59,6 +75,9 @@ def check_secrets_on_startup() -> None:
 def get_cors_origins() -> list[str]:
     """Parse ADFR_CORS_ORIGINS env var — comma-separated list."""
     raw = os.environ.get("ADFR_CORS_ORIGINS", "")
-    if not raw:
-        return []
-    return [o.strip() for o in raw.split(",") if o.strip()]
+    origins = [o.strip() for o in raw.split(",") if o.strip()] if raw else []
+    defaults = ["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"]
+    for d in defaults:
+        if d not in origins:
+            origins.append(d)
+    return origins

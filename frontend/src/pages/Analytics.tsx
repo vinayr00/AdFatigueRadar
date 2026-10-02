@@ -455,10 +455,10 @@ export const Analytics: React.FC = () => {
                   <span className="font-bold text-slate-900">{formatNumber(item.impressions, true)}</span>
                   <span
                     className={`font-semibold ${
-                      item.is_increase ? "text-[#059669]" : "text-[#DC2626]"
+                      item.is_increase === null ? "text-slate-400" : item.is_increase ? "text-[#059669]" : "text-[#DC2626]"
                     }`}
                   >
-                    {item.is_increase ? "↑" : "↓"} {Math.abs(item.change_pct)}%
+                    {item.change_pct === null ? "Change unavailable" : `${item.is_increase ? "↑" : "↓"} ${Math.abs(item.change_pct)}%`}
                   </span>
                 </div>
               </div>

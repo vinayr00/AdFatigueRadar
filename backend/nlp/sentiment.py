@@ -10,6 +10,7 @@ CPU-only, loaded once, eval mode, torch.no_grad, fully deterministic.
 
 import os
 import re
+from pathlib import Path
 from typing import Dict, Any, Tuple, Optional, List
 import torch
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
@@ -17,6 +18,7 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer
 from .constants import SENTIMENT_LABELS, DEFAULT_MAX_SEQ_LENGTH
 from .preprocessing import normalize_text
 from .calibration import TemperatureScaler, default_scaler
+from .model_loader import resolve_local_transformer_dir
 
 # Seed for absolute reproducibility
 torch.manual_seed(42)
@@ -39,7 +41,7 @@ class SentimentClassifier:
         scaler: Optional[TemperatureScaler] = None,
     ):
         self.scaler = scaler or default_scaler
-        self.model_dir = model_dir or self._find_default_model_dir()
+        self.model_dir = resolve_local_transformer_dir(model_dir or self._find_default_model_dir())
         
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         # Load local model and tokenizer once
@@ -54,13 +56,10 @@ class SentimentClassifier:
         self.model_version = getattr(self.model.config, "transformers_version", "1.0")
 
     def _find_default_model_dir(self) -> str:
-        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-        candidate = os.path.join(base_dir, "data", "models", "twitter-roberta-base-sentiment-latest")
-        if os.path.exists(candidate) and os.path.exists(os.path.join(candidate, "config.json")):
-            return candidate
-        fallback = os.path.join(base_dir, "data", "models", "twitter-xlm-roberta-base-sentiment")
-        if os.path.exists(fallback):
-            return fallback
+        base_dir = Path(__file__).resolve().parents[2]
+        candidate = base_dir / "data" / "models" / "twitter-roberta-base-sentiment-latest"
+        if candidate.is_dir():
+            return str(candidate)
         raise FileNotFoundError(f"Local sentiment model directory not found at {candidate}")
 
     def _apply_guard_rules(self, text: str, probs: Dict[str, float]) -> Tuple[str, float, Dict[str, float]]:

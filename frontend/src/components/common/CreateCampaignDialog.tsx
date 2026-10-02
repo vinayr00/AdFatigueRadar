@@ -6,13 +6,14 @@ import { X, Loader2, Sparkles } from "lucide-react";
 import { useUIStore } from "../../store/uiStore";
 import { useCreateCampaign } from "../../hooks/useCampaigns";
 import { Platform } from "../../types/contracts";
+import { apiFetch } from "../../api/client";
 
 const campaignSchema = z.object({
   name: z.string().min(3, "Campaign name must be at least 3 characters"),
   platform: z.enum(["meta", "google", "tiktok", "youtube", "x"]),
   category: z.string().min(2, "Category is required"),
   target_audience: z.string().min(2, "Target audience is required"),
-  budget: z.coerce.number().min(10, "Minimum budget is $10/day"),
+  budget: z.coerce.number().min(10, "Minimum budget is ₹100/day"),
   date_range: z.string().min(5, "Date range is required"),
 });
 
@@ -43,13 +44,23 @@ export const CreateCampaignDialog: React.FC = () => {
 
   const onSubmit = async (data: CampaignFormValues) => {
     try {
-      await createCampaignMutation.mutateAsync({
+      const created = await createCampaignMutation.mutateAsync({
         name: data.name,
         platform: data.platform as Platform,
         category: data.category,
         target_audience: data.target_audience,
         date_range: data.date_range,
       });
+
+      // ONLY AFTER successful campaign creation, initialize demo JSON
+      if (created && created.id) {
+        localStorage.setItem("active_demo_campaign", created.id);
+        await apiFetch(`/api/demo/campaigns/${encodeURIComponent(created.id)}/init`, {
+          method: "POST",
+          body: JSON.stringify({ name: created.name }),
+        }).catch(() => {});
+      }
+
       reset();
       setCreateCampaignModalOpen(false);
     } catch (err) {
@@ -104,7 +115,7 @@ export const CreateCampaignDialog: React.FC = () => {
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Daily Budget ($)</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Daily Budget (₹)</label>
               <input
                 type="number"
                 {...register("budget")}

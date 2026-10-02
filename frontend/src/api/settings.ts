@@ -1,26 +1,6 @@
-import { devRepository } from "../dev/repository";
 import { SettingsData } from "../types/contracts";
+import { apiFetch } from "./client";
 
-export async function fetchSettings(): Promise<SettingsData> {
-  try {
-    const res = await fetch(`/api/settings`);
-    if (res.ok) return await res.json();
-  } catch {
-    // Dev fallback
-  }
-  return devRepository.getSettings();
-}
-
-export async function updateSettingsApi(settings: Partial<SettingsData>): Promise<SettingsData> {
-  try {
-    const res = await fetch(`/api/settings`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(settings),
-    });
-    if (res.ok) return await res.json();
-  } catch {
-    // Dev fallback
-  }
-  return { ...devRepository.getSettings(), ...settings };
-}
+export const fetchSettings = (): Promise<SettingsData> => apiFetch("/api/settings");
+export const updateSettingsApi = (settings: Partial<SettingsData>): Promise<SettingsData> =>
+  apiFetch("/api/settings", { method: "PUT", body: JSON.stringify(settings) });

@@ -9,7 +9,7 @@ models = [
     "cardiffnlp/twitter-xlm-roberta-base-sentiment"
 ]
 
-base_dir = r"d:\kaladharroyal\projects\AdFatigue\data\models"
+base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "models"))
 os.makedirs(base_dir, exist_ok=True)
 
 for repo_id in models:

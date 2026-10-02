@@ -15,6 +15,7 @@ import {
   Activity,
   MessageSquare,
   Sparkles,
+  Trash2,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -34,7 +35,7 @@ import { RiskBadge } from "../components/common/RiskBadge";
 import { PlatformIcon } from "../components/common/PlatformIcon";
 import { Sparkline } from "../components/common/Sparkline";
 import { formatNumber, formatCurrency, formatPercent } from "../lib/formatters";
-import { useCampaigns, usePauseCampaign, useUnpauseCampaign } from "../hooks/useCampaigns";
+import { useCampaigns, usePauseCampaign, useUnpauseCampaign, useDeleteCampaign } from "../hooks/useCampaigns";
 import { useUIStore } from "../store/uiStore";
 import { Campaign } from "../types/contracts";
 
@@ -55,6 +56,7 @@ export const Campaigns: React.FC = () => {
   const { data: campaigns = [], isLoading } = useCampaigns();
   const pauseMutation = usePauseCampaign();
   const unpauseMutation = useUnpauseCampaign();
+  const deleteMutation = useDeleteCampaign();
 
   // Dynamic Summary Counts
   const totalCampaigns = campaigns.length;
@@ -412,6 +414,17 @@ export const Campaigns: React.FC = () => {
                               className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
                             >
                               <MoreHorizontal className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (window.confirm(`Are you sure you want to delete campaign "${camp.name}"?`)) {
+                                  deleteMutation.mutate(camp.id);
+                                }
+                              }}
+                              title="Delete Campaign"
+                              className="p-1 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
                         </td>

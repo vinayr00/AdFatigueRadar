@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 import threading
+from uuid import uuid4
 from datetime import datetime, timedelta, timezone
 from typing import Callable, Iterator, Protocol, runtime_checkable
 
@@ -34,6 +35,10 @@ class ReplayRunner(_SharedReplayRunner):
         self._latest_tick: TickResult | None = None
         self._start_audited = False
         self._runner_error: str | None = None
+        self._pause_event = threading.Event()
+        self._session_id: str | None = None
+        self.speed = 1.0
+        self._session_started_at: datetime | None = None
 
     @property
     def latest_tick(self) -> TickResult | None:
@@ -71,6 +76,13 @@ class ReplayRunner(_SharedReplayRunner):
         if not events:
             raise ValueError("Replay source contains no events")
         self._cancel_event.clear()
+        self._pause_event.clear()
+        self._session_id = uuid4().hex
+        self.speed = speed
+        self._session_started_at = None
+        from backend.db.repository import repository
+        repository.save_replay_session(self._session_id, self.campaign_id, speed, "RUNNING",
+            config={"step_minutes": self._cfg["compute"]["step_minutes"], "event_count": len(events)})
         self._running = True
         self._start_audited = False
         self._runner_error = None
@@ -88,11 +100,18 @@ class ReplayRunner(_SharedReplayRunner):
             self._machine.set_action_unverified(True)
         finally:
             self._running = False
+            if self._session_id:
+                from backend.db.repository import repository
+                repository.save_replay_session(self._session_id, self.campaign_id, self.speed,
+                    "FAILED" if self._runner_error else "COMPLETED",
+                    started_at=self._session_started_at,
+                    config={"step_minutes": self._cfg["compute"]["step_minutes"]})
 
     def reset(self) -> None:
         if self._machine.aggregator.clock.current is None and self._last_sim_time is None:
             raise ValueError("No simulated time is available for replay reset audit")
         self._cancel()
+        self._pause_event.clear()
         if self._lock:
             with self._lock:
                 self._do_reset()
@@ -104,6 +123,9 @@ class ReplayRunner(_SharedReplayRunner):
         if now_sim is None:
             raise ValueError("No simulated time is available for replay reset audit")
         self._audit.reset(now_sim, RiskSnapshot(audience_risk=0.0, economic_risk=None))
+        if self._session_id:
+            from backend.db.repository import repository
+            repository.save_replay_session(self._session_id, self.campaign_id, self.speed, "RESET", reset_at=now_sim)
         self._machine.reset()
         self._adapter._sandbox_state = CampaignState.ACTIVE
         self._timeline.clear()
@@ -144,6 +166,10 @@ class ReplayRunner(_SharedReplayRunner):
             buckets.setdefault(boundary, []).append(event)
         boundary, last = min(buckets), max(buckets)
         while boundary <= last and not self._cancel_event.is_set():
+            while self._pause_event.is_set() and not self._cancel_event.is_set():
+                self._cancel_event.wait(0.1)
+            if self._cancel_event.is_set():
+                break
             items = buckets.get(boundary, [])
             self._flush_step(
                 boundary,
@@ -159,44 +185,84 @@ class ReplayRunner(_SharedReplayRunner):
                     self._sleeper(step_seconds)
         self._running = False
 
+    def pause(self) -> bool:
+        if not self._running:
+            return False
+        self._pause_event.set()
+        return True
+
+    def resume(self) -> bool:
+        if not self._running:
+            return False
+        self._pause_event.clear()
+        return True
+
     def _flush_step(self, step_boundary, comments, nlp, telemetry) -> None:
         lock = self._lock or threading.Lock()
         with lock:
             agg = self._machine.aggregator
             agg.clock.tick(step_boundary)
             self._last_sim_time = step_boundary
+            if self._session_started_at is None:
+                self._session_started_at = step_boundary
+                if self._session_id:
+                    from backend.db.repository import repository
+                    repository.save_replay_session(self._session_id, self.campaign_id, self.speed,
+                        "RUNNING", started_at=step_boundary,
+                        config={"step_minutes": self._cfg["compute"]["step_minutes"]})
             if not self._start_audited:
                 self._audit.append(step_boundary, ActorType.SYSTEM, "REPLAY_START",
                     [ReasonCode.REPLAY_START], RiskSnapshot(audience_risk=0.0, economic_risk=None),
                     config_version=self._machine.config_version)
                 self._start_audited = True
 
+            stored_comments = []
             for comment in comments:
                 _, codes = agg.ingest_comment(comment)
+                stored_comment = agg._comments.get(comment.event_id)
+                if stored_comment is not None:
+                    stored_comments.append(stored_comment)
                 self._audit_codes(codes, step_boundary)
-            for result in nlp:
-                _, codes = agg.ingest_nlp(result)
-                self._audit_codes(codes, step_boundary)
+            if stored_comments:
+                from backend.db.repository import repository
+                repository.save_comments(stored_comments)
+
+            if nlp:
+                for result in nlp:
+                    _, codes = agg.ingest_nlp(result)
+                    self._audit_codes(codes, step_boundary)
+                from backend.db.repository import repository
+                repository.save_nlp_results(nlp)
+
             had_telemetry = False
+            saved_telemetry = []
             for event in telemetry:
                 if agg.ingest_telemetry(event):
                     had_telemetry = True
+                    saved_telemetry.append(event)
+            if saved_telemetry:
+                from backend.db.repository import repository
+                repository.save_telemetry_batch(saved_telemetry)
 
             result = self._machine.tick(step_boundary, had_telemetry)
+            from backend.db.repository import repository
+            repository.save_snapshot(self.campaign_id, result, step_boundary)
             self._latest_tick = result
             self._audit_codes(result.staleness_audit_codes, step_boundary,
                               RiskSnapshot(audience_risk=result.audience_risk, economic_risk=result.economic_risk))
             if result.state_changed and result.state == CampaignState.PAUSED:
-                self._adapter.system_pause(
+                action_result = self._adapter.system_pause(
                     step_boundary, result.action_confidence or 0.0,
                     result.transition_reason_codes, result.path_taken or "PATH_A",
                     RiskSnapshot(audience_risk=result.audience_risk, economic_risk=result.economic_risk),
                     previous_state=result.previous_state,
                     config_version=self._machine.config_version,
                 )
+                from backend.db.repository import repository
+                repository.save_action(self.campaign_id, action_result, step_boundary)
                 self._latest_tick = result
             elif result.state_changed:
-                self._audit.append(
+                transition_audit_id = self._audit.append(
                     step_boundary, ActorType.SYSTEM,
                     result.transition_reason_codes[0].value if result.transition_reason_codes else "STATE_CHANGE",
                     result.transition_reason_codes,
@@ -204,6 +270,14 @@ class ReplayRunner(_SharedReplayRunner):
                     previous_state=result.previous_state, new_state=result.state,
                     config_version=self._machine.config_version,
                 )
+                from backend.db.repository import repository
+                repository.save_action(self.campaign_id, {"id": transition_audit_id,
+                    "action": result.transition_reason_codes[0].value if result.transition_reason_codes else "STATE_CHANGE",
+                    "previous_state": result.previous_state.value if result.previous_state else None,
+                    "new_state": result.state.value, "readback_verified": None}, step_boundary)
+
+            repository.save_campaign_state(self.campaign_id, self._machine.state.value,
+                self._machine.pre_block_state.value if self._machine.pre_block_state else None)
 
             from backend.models.backend_models import SignalBreakdown, TimelinePoint
             signals = result.signals
@@ -246,6 +320,12 @@ class ReplayRunner(_SharedReplayRunner):
             serialized["severity"] = point.severity.value
             serialized["signal_breakdown"] = point.signal_breakdown.model_dump()
             serialized["reason_codes"] = [code.value for code in point.reason_codes]
+            sums = agg.get_telemetry_window_sums()
+            serialized["observed_impressions"] = sums["impressions"] or 0.0
+            serialized["observed_spend"] = sums["spend"] or 0.0
+            serialized["observed_clicks"] = sums["clicks"] or 0.0
+            serialized["observed_conversions"] = sums["conversions"] or 0.0
+            serialized["cpm"] = sums["cpm"]
             self._timeline.append(serialized)
 
     def _audit_codes(self, codes, timestamp, risk=None) -> None:

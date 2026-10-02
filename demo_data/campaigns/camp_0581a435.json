@@ -1,0 +1,39 @@
+{
+  "campaign_id": "camp_0581a435",
+  "name": "Demo",
+  "status": "ACTIVE",
+  "severity": "HEALTHY",
+  "health_score": 100,
+  "risk_score": 0.0,
+  "economic_risk": 0.05,
+  "cpa": 1050.0,
+  "metrics": {
+    "total_comments": 0,
+    "positive_comments": 0,
+    "negative_comments": 0,
+    "neutral_comments": 0,
+    "fatigue_comments": 0,
+    "complaint_comments": 0,
+    "mockery_comments": 0,
+    "negative_ratio": 0.0,
+    "recent_negative_ratio": 0.0
+  },
+  "recent_window": {
+    "size": 20,
+    "events": [],
+    "negative": 0,
+    "positive": 0,
+    "neutral": 0
+  },
+  "comments": [],
+  "events": [
+    {
+      "event_id": "evt_1",
+      "event_type": "CAMPAIGN_INITIALIZED",
+      "description": "Campaign 'Demo' initialized with 100% health score.",
+      "timestamp": "2026-10-01T01:18:02.253968+00:00"
+    }
+  ],
+  "created_at": "2026-10-01T01:18:02.253968+00:00",
+  "updated_at": "2026-10-01T01:18:02.253968+00:00"
+}

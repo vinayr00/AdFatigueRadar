@@ -10,12 +10,20 @@ from __future__ import annotations
 
 import os
 
-from fastapi import FastAPI, Request, Response
+try:
+    from dotenv import load_dotenv
+    load_dotenv(override=False)
+except ImportError:
+    pass
+
+from fastapi import FastAPI, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
 
 from backend.api.auth import check_secrets_on_startup, get_cors_origins
-from backend.api import routes_campaigns, routes_actions, routes_thresholds, routes_webhooks
+from backend.api import routes_auth, routes_campaigns, routes_actions, routes_thresholds, routes_webhooks, frontend_routes
+from backend.db.session import engine, database_configured
 
 app = FastAPI(
     title="AdFatigueRadar — Person 2 Backend",
@@ -39,8 +47,8 @@ if origins:
         CORSMiddleware,
         allow_origins=origins,
         allow_credentials=True,
-        allow_methods=["GET", "POST", "PUT"],
-        allow_headers=["X-API-Key", "Content-Type"],
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["*"],
     )
 
 
@@ -70,6 +78,9 @@ async def startup() -> None:
 # ---------------------------------------------------------------------------
 # Routers
 # ---------------------------------------------------------------------------
+app.include_router(routes_auth.router)
+app.include_router(frontend_routes.router_campaigns)
+app.include_router(frontend_routes.router)
 app.include_router(routes_campaigns.router)
 app.include_router(routes_actions.router)
 app.include_router(routes_thresholds.router)
@@ -77,5 +88,22 @@ app.include_router(routes_webhooks.router)
 
 
 @app.get("/health")
-async def health() -> dict:
-    return {"status": "ok"}
+async def health(response: Response) -> dict:
+    db_status = "unconfigured"
+    if database_configured() and engine is not None:
+        try:
+            with engine.connect() as conn:
+                conn.execute(text("SELECT 1"))
+                db_status = "connected"
+        except Exception:
+            db_status = "disconnected"
+
+    is_healthy = db_status == "connected"
+    if not is_healthy:
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+
+    return {
+        "status": "ok" if is_healthy else "degraded",
+        "database": db_status,
+    }
+

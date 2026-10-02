@@ -36,6 +36,27 @@ class AuditLog:
         self._entries: list[AuditEvent] = []
         self._lock = threading.Lock()
         self._counter: int = 0  # keeps counting across resets
+        from backend.db.repository import repository
+        from backend.models.backend_models import ReasonCode
+        for row in repository.list_audits(campaign_id):
+            try:
+                event = AuditEvent(
+                    audit_id=row.audit_id, timestamp_simulated=row.timestamp_simulated,
+                    campaign_id=row.campaign_id, actor_type=ActorType(row.actor_type),
+                    action=row.action,
+                    previous_state=CampaignState(row.previous_state) if row.previous_state else None,
+                    new_state=CampaignState(row.new_state) if row.new_state else None,
+                    reason_codes=[ReasonCode(code) for code in row.reason_codes],
+                    risk=RiskSnapshot.model_validate(row.risk_json),
+                    readback_verified=row.readback_verified, config_version=row.config_version,
+                    confidence=row.confidence,
+                )
+                self._entries.append(event)
+                self._counter = max(self._counter, int(row.audit_id.removeprefix("audit_")))
+            except (ValueError, TypeError):
+                # Corrupt historic rows are excluded from runtime state and remain
+                # visible to DB operators; no stack trace or private data is logged.
+                continue
 
     def append(
         self,
@@ -69,6 +90,8 @@ class AuditLog:
                 confidence=confidence,
             )
             self._entries.append(entry)
+        from backend.db.repository import repository
+        repository.save_audit(entry)
         return audit_id
 
     def get_all(self) -> list[AuditEvent]:

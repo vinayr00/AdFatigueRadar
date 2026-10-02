@@ -22,6 +22,7 @@ import re
 from typing import Dict, Any, Optional, List, Tuple
 import torch
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
+from .model_loader import resolve_local_transformer_dir
 
 # Standard CardiffNLP Twitter text preprocessing placeholder helper
 def preprocess_for_twitter_roberta(text: str) -> str:
@@ -73,6 +74,7 @@ class CardiffNLPSignals:
     @property
     def sentiment_model(self):
         if self._sentiment_model is None:
+            self.sentiment_dir = resolve_local_transformer_dir(self.sentiment_dir)
             self._sentiment_tokenizer = AutoTokenizer.from_pretrained(self.sentiment_dir, local_files_only=True)
             self._sentiment_model = AutoModelForSequenceClassification.from_pretrained(self.sentiment_dir, local_files_only=True)
             self._sentiment_model.to(self.device)
@@ -88,6 +90,7 @@ class CardiffNLPSignals:
     @property
     def irony_model(self):
         if self._irony_model is None:
+            self.irony_dir = resolve_local_transformer_dir(self.irony_dir)
             self._irony_tokenizer = AutoTokenizer.from_pretrained(self.irony_dir, local_files_only=True)
             self._irony_model = AutoModelForSequenceClassification.from_pretrained(self.irony_dir, local_files_only=True)
             self._irony_model.to(self.device)
@@ -103,6 +106,7 @@ class CardiffNLPSignals:
     @property
     def multilingual_model(self):
         if self._multilingual_model is None:
+            self.multilingual_dir = resolve_local_transformer_dir(self.multilingual_dir)
             self._multilingual_tokenizer = AutoTokenizer.from_pretrained(self.multilingual_dir, local_files_only=True)
             self._multilingual_model = AutoModelForSequenceClassification.from_pretrained(self.multilingual_dir, local_files_only=True)
             self._multilingual_model.to(self.device)

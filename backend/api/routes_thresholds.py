@@ -29,13 +29,22 @@ from backend.risk.config_loader import get_config
 router = APIRouter(prefix="/campaigns", tags=["thresholds"])
 
 
+def _context(campaign_id: str):
+    registry = get_registry()
+    ctx = registry.get(campaign_id)
+    if ctx is None:
+        from backend.db.repository import repository
+        if repository.get_campaign_state(campaign_id) is not None:
+            ctx = registry.get_or_create(campaign_id)
+    if ctx is None:
+        raise HTTPException(status_code=404, detail="Unknown campaign")
+    return ctx
+
+
 @router.get("/{campaign_id}/thresholds")
 async def get_thresholds(campaign_id: str) -> JSONResponse:
     """Read the campaign's effective threshold configuration and override bounds."""
-    reg = get_registry()
-    ctx = reg.get(campaign_id)
-    if ctx is None:
-        raise HTTPException(status_code=404, detail="Unknown campaign")
+    ctx = _context(campaign_id)
     with ctx.lock:
         cfg = ctx.machine._cfg
         return JSONResponse(content={
@@ -53,10 +62,7 @@ async def update_thresholds(
     body: ThresholdOverrideRequest,
     _: None = Depends(verify_api_key),
 ) -> JSONResponse:
-    reg = get_registry()
-    ctx = reg.get(campaign_id)
-    if ctx is None:
-        raise HTTPException(status_code=404, detail="Unknown campaign")
+    ctx = _context(campaign_id)
 
     # Validate against the campaign's layered configuration.
     try:
@@ -79,6 +85,12 @@ async def update_thresholds(
         # Apply override and reset persistence trackers
         ctx.machine.apply_threshold_override(body.overrides)
         new_config_version = ctx.machine.config_version
+        from backend.db.repository import repository
+        effective_overrides = {
+            key: _get_nested(ctx.machine._cfg, key)
+            for key in ctx.machine._cfg["threshold_mutable_keys"]
+        }
+        repository.save_threshold_override(campaign_id, effective_overrides, new_config_version, now)
 
         # Audit the change
         risk = RiskSnapshot(

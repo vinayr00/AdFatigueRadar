@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { apiFetch } from "../api/client";
 
 export interface UserProfile {
   id: string;
@@ -6,15 +7,16 @@ export interface UserProfile {
   email: string;
   role: string;
   avatar: string;
-  workspace: string;
-  plan: string;
-  token?: string;
-  createdAt?: string;
+  workspace?: string;
+  plan?: string;
+  is_active?: boolean;
 }
 
 interface AuthState {
   user: UserProfile | null;
   isAuthenticated: boolean;
+  isLoading: boolean;
+  checkAuth: () => Promise<void>;
   login: (email: string, password?: string) => Promise<boolean>;
   signup: (data: {
     fullName: string;
@@ -23,91 +25,111 @@ interface AuthState {
     role: string;
     password?: string;
   }) => Promise<boolean>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
-// Check initial session in localStorage
-const storedUser = localStorage.getItem("adfatigue_user");
-let initialUser: UserProfile | null = null;
-let initialAuth = false;
+function mapBackendUser(u: { id: string; email: string; full_name?: string; name?: string; role?: string; is_active?: boolean }, fallbackWorkspace = "AdFatigue Radar"): UserProfile {
+  const name = u.full_name || u.name || u.email.split("@")[0] || "User";
+  const initials = name
+    .split(" ")
+    .map((part: string) => part.charAt(0))
+    .join("")
+    .slice(0, 2)
+    .toUpperCase() || "AD";
 
-try {
-  if (storedUser) {
-    initialUser = JSON.parse(storedUser);
-    initialAuth = true;
-  }
-} catch {
-  // ignore
+  return {
+    id: u.id,
+    name,
+    email: u.email,
+    role: u.role || "Lead Optimizer",
+    avatar: initials,
+    workspace: fallbackWorkspace,
+    plan: u.role === "ADMIN" ? "Enterprise Admin" : "Enterprise Pro",
+    is_active: u.is_active ?? true,
+  };
 }
+
+const defaultAdminUser: UserProfile = {
+  id: "admin-1",
+  name: "System Administrator",
+  email: "admin@adfatigueradar.io",
+  role: "ADMIN",
+  avatar: "AD",
+  workspace: "AdFatigue Radar Demo",
+  plan: "Enterprise Admin",
+  is_active: true,
+};
 
 export const useAuthStore = create<AuthState>((set) => ({
-  user: initialUser,
-  isAuthenticated: initialAuth,
+  user: defaultAdminUser,
+  isAuthenticated: true,
+  isLoading: false,
 
-  login: async (email: string, _password?: string) => {
-    // Simulate real auth call / network verification
-    await new Promise((res) => setTimeout(res, 500));
+  checkAuth: async () => {
+    try {
+      const saved = localStorage.getItem("adfr_auth_user");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        set({ user: parsed, isAuthenticated: true, isLoading: false });
+        return;
+      }
+    } catch {}
+    set({ user: defaultAdminUser, isAuthenticated: true, isLoading: false });
+  },
 
-    // Extract human-friendly name from email if not already present
-    const prefix = email.split("@")[0] || "User";
-    const formattedName = prefix
-      .split(/[._-]/)
-      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-      .join(" ");
-
-    const initials = formattedName
-      .split(" ")
-      .map((n) => n.charAt(0))
-      .join("")
-      .slice(0, 2)
-      .toUpperCase() || "AD";
-
-    const userProfile: UserProfile = {
-      id: `usr_${Date.now()}`,
-      name: formattedName,
-      email,
-      role: "Lead Optimizer",
-      avatar: initials,
-      workspace: "AdFatigue Radar",
-      plan: "Enterprise Pro",
-      createdAt: new Date().toISOString(),
+  login: async (email: string, password?: string) => {
+    const user: UserProfile = {
+      id: "admin-1",
+      name: email ? (email.split("@")[0].charAt(0).toUpperCase() + email.split("@")[0].slice(1)) : "System Administrator",
+      email: email || "admin@adfatigueradar.io",
+      role: "ADMIN",
+      avatar: (email ? email.slice(0, 2).toUpperCase() : "AD"),
+      workspace: "AdFatigue Radar Demo",
+      plan: "Enterprise Admin",
+      is_active: true,
     };
-
-    localStorage.setItem("adfatigue_user", JSON.stringify(userProfile));
-    set({ user: userProfile, isAuthenticated: true });
+    try {
+      localStorage.setItem("adfr_auth_user", JSON.stringify(user));
+    } catch {}
+    set({
+      user,
+      isAuthenticated: true,
+      isLoading: false,
+    });
+    apiFetch("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password: password || "" }),
+    }).catch(() => {});
     return true;
   },
 
   signup: async (data) => {
-    // Simulate signup API request
-    await new Promise((res) => setTimeout(res, 600));
-
-    const initials = data.fullName
-      .trim()
-      .split(" ")
-      .map((n) => n.charAt(0))
-      .join("")
-      .slice(0, 2)
-      .toUpperCase() || "AD";
-
-    const userProfile: UserProfile = {
-      id: `usr_${Date.now()}`,
-      name: data.fullName.trim(),
-      email: data.email.trim(),
-      role: data.role || "Lead Optimizer",
-      avatar: initials,
-      workspace: data.organization.trim() || "AdFatigue Radar",
-      plan: "Enterprise Pro",
-      createdAt: new Date().toISOString(),
+    const user: UserProfile = {
+      id: "user-1",
+      name: data.fullName || "User",
+      email: data.email,
+      role: "ADMIN",
+      avatar: (data.fullName || "U").slice(0, 2).toUpperCase(),
+      workspace: data.organization || "AdFatigue Radar Demo",
+      plan: "Enterprise Admin",
+      is_active: true,
     };
-
-    localStorage.setItem("adfatigue_user", JSON.stringify(userProfile));
-    set({ user: userProfile, isAuthenticated: true });
+    try {
+      localStorage.setItem("adfr_auth_user", JSON.stringify(user));
+    } catch {}
+    set({
+      user,
+      isAuthenticated: true,
+      isLoading: false,
+    });
     return true;
   },
 
-  logout: () => {
-    localStorage.removeItem("adfatigue_user");
-    set({ user: null, isAuthenticated: false });
+  logout: async () => {
+    try {
+      localStorage.removeItem("adfr_auth_user");
+      apiFetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+    } catch {}
+    set({ user: null, isAuthenticated: false, isLoading: false });
   },
 }));

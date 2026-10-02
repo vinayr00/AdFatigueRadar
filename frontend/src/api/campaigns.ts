@@ -1,56 +1,28 @@
-import { devRepository } from "../dev/repository";
 import { Campaign, CampaignState } from "../types/contracts";
+import { apiFetch } from "./client";
 
-export async function fetchCampaigns(filters?: { status?: string; platform?: string; search?: string }): Promise<Campaign[]> {
-  try {
-    const res = await fetch(`/api/campaigns${filters ? `?status=${filters.status || ""}&platform=${filters.platform || ""}&search=${filters.search || ""}` : ""}`);
-    if (res.ok) return await res.json();
-  } catch {
-    // Fallback to isolated dev repository
-  }
-  return devRepository.getCampaigns(filters);
+export function fetchCampaigns(filters?: { status?: string; platform?: string; search?: string }): Promise<Campaign[]> {
+  const query = new URLSearchParams();
+  Object.entries(filters || {}).forEach(([key, value]) => value && query.set(key, value));
+  return apiFetch(`/api/campaigns${query.size ? `?${query}` : ""}`);
 }
 
-export async function fetchCampaignById(id: string): Promise<Campaign | null> {
-  try {
-    const res = await fetch(`/api/campaigns/${id}`);
-    if (res.ok) return await res.json();
-  } catch {
-    // Fallback
-  }
-  return devRepository.getCampaignById(id);
+export function fetchCampaignById(id: string): Promise<Campaign> {
+  return apiFetch(`/api/campaigns/${encodeURIComponent(id)}`);
 }
 
-export async function createCampaignApi(data: Partial<Campaign>): Promise<Campaign> {
-  try {
-    const res = await fetch(`/api/campaigns`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-    if (res.ok) return await res.json();
-  } catch {
-    // Fallback
-  }
-  return devRepository.createCampaign(data);
+export function createCampaignApi(data: Partial<Campaign>): Promise<Campaign> {
+  return apiFetch("/api/campaigns", { method: "POST", body: JSON.stringify(data) });
 }
 
-export async function pauseCampaignApi(campaignId: string): Promise<{ success: boolean; new_state: CampaignState; readback_verified: boolean }> {
-  try {
-    const res = await fetch(`/api/campaigns/${campaignId}/pause`, { method: "POST" });
-    if (res.ok) return await res.json();
-  } catch {
-    // Fallback
-  }
-  return devRepository.pauseCampaign(campaignId);
+export function pauseCampaignApi(campaignId: string): Promise<{ success: boolean; new_state: CampaignState; readback_verified: boolean }> {
+  return apiFetch(`/api/campaigns/${encodeURIComponent(campaignId)}/pause`, { method: "POST" });
 }
 
-export async function unpauseCampaignApi(campaignId: string): Promise<{ success: boolean; new_state: CampaignState; readback_verified: boolean }> {
-  try {
-    const res = await fetch(`/api/campaigns/${campaignId}/unpause`, { method: "POST" });
-    if (res.ok) return await res.json();
-  } catch {
-    // Fallback
-  }
-  return devRepository.unpauseCampaign(campaignId);
+export function unpauseCampaignApi(campaignId: string): Promise<{ success: boolean; new_state: CampaignState; readback_verified: boolean }> {
+  return apiFetch(`/api/campaigns/${encodeURIComponent(campaignId)}/unpause`, { method: "POST" });
+}
+
+export function deleteCampaignApi(campaignId: string): Promise<{ success: boolean; campaign_id: string; message: string }> {
+  return apiFetch(`/api/campaigns/${encodeURIComponent(campaignId)}`, { method: "DELETE" });
 }

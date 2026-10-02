@@ -19,6 +19,14 @@ from backend.risk.state_machine import CampaignStateMachine
 T0 = datetime(2026, 9, 30, 12, 0, tzinfo=timezone.utc)
 
 
+@pytest.fixture(autouse=True)
+def clean_test_campaign():
+    from backend.db.repository import repository
+    repository.delete_campaign("c")
+    yield
+    repository.delete_campaign("c")
+
+
 def potential() -> TelemetryEvent:
     return TelemetryEvent(event_id="t", timestamp=T0, campaign_id="c", ad_id="a", spend=100,
                           impressions=1000, reach=500, clicks=10, conversions=2, roas=3)

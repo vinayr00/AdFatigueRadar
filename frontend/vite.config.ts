@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'node:path'
+import process from 'node:process'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -12,6 +13,20 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
+    },
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        headers: process.env.ADFR_API_KEY ? { 'X-API-Key': process.env.ADFR_API_KEY } : {},
+      },
+      '/campaigns': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        headers: process.env.ADFR_API_KEY ? { 'X-API-Key': process.env.ADFR_API_KEY } : {},
+      },
     },
   },
 })

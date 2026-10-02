@@ -1,32 +1,16 @@
-import { devRepository } from "../dev/repository";
 import { ReplayState } from "../types/contracts";
+import { apiFetch } from "./client";
 
-export async function startReplayApi(campaignId: string, speed: number = 1): Promise<{ status: string; current_hour: number }> {
-  try {
-    const res = await fetch(`/campaigns/${campaignId}/replay/start?speed=${speed}`, { method: "POST" });
-    if (res.ok) return await res.json();
-  } catch {
-    // Dev fallback
-  }
-  return { status: "RUNNING", current_hour: 0 };
+export function startReplayApi(campaignId: string, speed = 1): Promise<{ started: boolean; campaign_id: string; speed: number }> {
+  return apiFetch(`/campaigns/${encodeURIComponent(campaignId)}/replay/start?speed=${encodeURIComponent(speed)}`, { method: "POST" });
 }
-
-export async function resetReplayApi(campaignId: string): Promise<{ status: string; current_hour: number }> {
-  try {
-    const res = await fetch(`/campaigns/${campaignId}/replay/reset`, { method: "POST" });
-    if (res.ok) return await res.json();
-  } catch {
-    // Dev fallback
-  }
-  return { status: "RESET", current_hour: 0 };
+export function resetReplayApi(campaignId: string): Promise<{ reset: boolean; campaign_id: string }> {
+  return apiFetch(`/campaigns/${encodeURIComponent(campaignId)}/replay/reset`, { method: "POST" });
 }
-
-export async function fetchReplaySnapshot(campaignId: string, speed: number = 1): Promise<ReplayState> {
-  try {
-    const res = await fetch(`/campaigns/${campaignId}/replay/snapshot`);
-    if (res.ok) return await res.json();
-  } catch {
-    // Dev fallback
-  }
-  return devRepository.getReplayData(campaignId, speed);
+export const pauseReplayApi = (campaignId: string): Promise<{ paused: boolean; campaign_id: string }> =>
+  apiFetch(`/campaigns/${encodeURIComponent(campaignId)}/replay/pause`, { method: "POST" });
+export const resumeReplayApi = (campaignId: string): Promise<{ resumed: boolean; campaign_id: string }> =>
+  apiFetch(`/campaigns/${encodeURIComponent(campaignId)}/replay/resume`, { method: "POST" });
+export function fetchReplaySnapshot(campaignId: string, _speed = 1): Promise<ReplayState> {
+  return apiFetch(`/api/replay/${encodeURIComponent(campaignId)}/snapshot`);
 }

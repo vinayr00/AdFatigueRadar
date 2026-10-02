@@ -35,6 +35,7 @@ from .constants import (
 )
 from .preprocessing import normalize_text
 from .calibration import TemperatureScaler, default_scaler
+from .model_loader import resolve_local_transformer_dir
 
 # Seed for deterministic evaluation
 torch.manual_seed(42)
@@ -61,6 +62,7 @@ class TaxonomyClassifier:
         
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         # Load embedding backbone
+        self.model_dir = resolve_local_transformer_dir(self.model_dir)
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_dir, local_files_only=True)
         self.model = AutoModel.from_pretrained(self.model_dir, local_files_only=True)
         self.model.to(self.device)
